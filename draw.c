@@ -1,13 +1,3 @@
-#include <fcntl.h>
-#include <linux/fb.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <unistd.h>
-#include "draw.h"
-
 #define MIN(a, b)	((a) < (b) ? (a) : (b))
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
 #define NLEVELS		(1 << 8)
@@ -16,11 +6,11 @@ static struct fb_var_screeninfo vinfo;	/* linux-specific FB structure */
 static struct fb_fix_screeninfo finfo;	/* linux-specific FB structure */
 static char fbdev[1024];		/* FB device */
 static int fd;				/* FB device file descriptor */
-static void *fb;			/* mmap()ed FB memory */
+static char *fb;			/* mmap()ed FB memory */
 static int bpp;				/* bytes per pixel */
 static int nr, ng, nb;			/* color levels */
 static int rl, rr, gl, gr, bl, br;	/* shifts per color */
-static int xres, yres, xoff, yoff;	/* drawing region */
+static unsigned int xres, yres, xoff, yoff;	/* drawing region */
 
 static int fb_len(void)
 {
@@ -93,7 +83,7 @@ int fb_init(char *dev)
 	char *geom = dev ? strchr(dev, ':') : NULL;
 	if (geom) {
 		*geom = '\0';
-		sscanf(geom + 1, "%dx%d%d%d", &xres, &yres, &xoff, &yoff);
+		sscanf(geom + 1, "%ux%u%u%u", &xres, &yres, &xoff, &yoff);
 	}
 	snprintf(fbdev, sizeof(fbdev), "%s", dev);
 	fd = open(path, O_RDWR);
@@ -135,7 +125,7 @@ int fb_cols(void)
 	return xres ? xres : vinfo.xres;
 }
 
-void *fb_mem(int r)
+char *fb_mem(int r)
 {
 	return fb + (r + vinfo.yoffset + yoff) * finfo.line_length + (vinfo.xoffset + xoff) * bpp;
 }

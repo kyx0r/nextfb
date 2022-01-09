@@ -1,10 +1,3 @@
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include "fbpad.h"
-
 struct font {
 	int rows, cols;	/* glyph bitmap rows and columns */
 	int n;		/* number of font glyphs */

@@ -1,17 +1,3 @@
-#include <ctype.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <poll.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <termios.h>
-#include <unistd.h>
-#include "conf.h"
-#include "fbpad.h"
-
 #define MODE_CURSOR		0x01
 #define MODE_WRAP		0x02
 #define MODE_ORIGIN		0x04
@@ -34,7 +20,7 @@ static int *fgs, *bgs;
 static int *dirty;
 static int lazy;
 static int row, col;
-static int fg, bg;
+static unsigned int fg, bg;
 static int top, bot;
 static int mode;
 static int visible;
@@ -92,8 +78,8 @@ static void _draw_pos(int r, int c, int cursor)
 /* assumes visible && !lazy */
 static void _draw_row(int r)
 {
-	int cbg, cch;		/* current background and character */
-	int fbg, fsc = -1;	/* filling background and start column */
+	int cbg = 0, cch;		/* current background and character */
+	int fbg, fsc = -1;		/* filling background and start column */
 	int i;
 	/* call pad_fill() only once for blank columns with identical backgrounds */
 	for (i = 0; i < pad_cols(); i++) {

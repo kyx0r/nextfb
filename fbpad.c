@@ -1,7 +1,8 @@
 /*
- * FBPAD FRAMEBUFFER VIRTUAL TERMINAL
+ * NEXTFB FRAMEBUFFER VIRTUAL TERMINAL
  *
  * Copyright (C) 2009-2021 Ali Gholami Rudi <ali at rudi dot ir>
+ * Copyright (C) 2020-2021 Kyryl Melekhin <k dot melekhin at gmail dot com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +16,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -27,13 +29,20 @@
 #include <termios.h>
 #include <unistd.h>
 #include <linux/vt.h>
-#include "conf.h"
+#include <linux/fb.h>
+#include <sys/mman.h>
 #include "fbpad.h"
-#include "draw.h"
+#include "conf.h"
+#include "font.c"
+#include "term.c"
+#include "pad.c"
+#include "draw.c"
+#include "isdw.c"
+#include "scrsnap.c"
 
 #define CTRLKEY(x)	((x) - 96)
 #define POLLFLAGS	(POLLIN | POLLHUP | POLLERR | POLLNVAL)
-#define NTAGS		(sizeof(tags) - 1)
+#define NTAGS		(int)(sizeof(tags) - 1)
 #define NTERMS		(NTAGS * 2)
 #define TERMOPEN(i)	(terms[i].fd)
 #define TERMSNAP(i)	(strchr(TAGS_SAVED, tags[(i) % NTAGS]))
@@ -49,7 +58,7 @@ static int hidden;		/* do not touch the framebuffer */
 static int locked;
 static int taglock;		/* disable tag switching */
 static char pass[1024];
-static int passlen;
+static unsigned int passlen;
 static int cmdmode;		/* execute a command and exit */
 
 static int readchar(void)
@@ -226,7 +235,7 @@ static void directkey(void)
 	char *mail[32] = MAIL;
 	char *editor[32] = EDITOR;
 	int c = readchar();
-	if (PASS && locked) {
+	if (*PASS && locked) {
 		if (c == '\r') {
 			pass[passlen] = '\0';
 			if (!strcmp(PASS, pass))
@@ -360,7 +369,12 @@ static void mainloop(char **args)
 	struct termios oldtermios, termios;
 	tcgetattr(0, &termios);
 	oldtermios = termios;
-	cfmakeraw(&termios);
+	termios.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
+		| INLCR | IGNCR | ICRNL | IXON);
+	termios.c_oflag &= ~OPOST;
+	termios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+	termios.c_cflag &= ~(CSIZE | PARENB);
+	termios.c_cflag |= CS8;
 	tcsetattr(0, TCSAFLUSH, &termios);
 	term_load(&terms[cterm()], 1);
 	term_redraw(1);

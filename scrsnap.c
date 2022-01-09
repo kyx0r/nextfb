@@ -1,10 +1,6 @@
-#include <stdlib.h>
-#include <string.h>
-#include "draw.h"
-
 #define NSCRS		128
 
-static void *scrs[NSCRS];
+static char *scrs[NSCRS];
 
 void scr_snap(int idx)
 {

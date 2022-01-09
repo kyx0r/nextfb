@@ -11,8 +11,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "chars.h"
 #include "mkfn.h"
+#include "chars.h"
+#include "isdw.c"
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "stb_truetype.h"
+#include "mkfn_stb.c"
 
 #define NGLYPHS		(1 << 14)
 
@@ -20,8 +24,8 @@ static int rows, cols;
 
 static int fn_glyphs(int *glyphs)
 {
-	int i, j;
-	int n = 0;
+	unsigned int i;
+	int n = 0, j;
 	for (i = 0; i < sizeof(chars) / sizeof(chars[0]); i++) {
 		for (j = chars[i][0]; j <= chars[i][1] && n < NGLYPHS; j++) {
 			if (!mkfn_bitmap(NULL, j, rows, cols))
@@ -33,7 +37,7 @@ static int fn_glyphs(int *glyphs)
 	return n;
 }
 
-static int intcmp(void *v1, void *v2)
+static int intcmp(const void *v1, const void *v2)
 {
 	return *(int *) v1 - *(int *) v2;
 }
@@ -64,7 +68,7 @@ static void output(int fd)
 	head.rows = rows;
 	head.cols = cols;
 	head.n = fn_glyphs(glyphs);
-	qsort(glyphs, head.n, sizeof(glyphs[0]), (void *) intcmp);
+	qsort(glyphs, head.n, sizeof(glyphs[0]), intcmp);
 	write(fd, &head, sizeof(head));
 	write(fd, glyphs, sizeof(*glyphs) * head.n);
 	for (i = 0; i < head.n; i++) {

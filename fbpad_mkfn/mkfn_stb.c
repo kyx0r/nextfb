@@ -1,11 +1,3 @@
-#include <ctype.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include "stb_truetype.h"
-#include "mkfn.h"
-
 #define LIMIT(n, a, b)	((n) < (a) ? (a) : ((n) > (b) ? (b) : (n)))
 
 static stbtt_fontinfo fn[NFONTS];

@@ -1,11 +1,3 @@
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "conf.h"
-#include "draw.h"
-#include "fbpad.h"
-
 static int fbroff, fbcoff, fbrows, fbcols;
 static int rows, cols;
 static int fnrows, fncols;
@@ -218,7 +210,7 @@ int pad_font(char *fr, char *fi, char *fb)
 
 char *pad_fbdev(void)
 {
-	static char fbdev[1024];
+	static char fbdev[2048];
 	snprintf(fbdev, sizeof(fbdev), "FBDEV=%s:%dx%d%+d%+d",
 		fb_dev(), fbcols, fbrows, fbcoff, fbroff);
 	return fbdev;

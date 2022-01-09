@@ -23,7 +23,7 @@
 #define SCRSHOT		"/tmp/scr"
 
 /* lock command password; NULL disables locking */
-#define PASS		NULL
+#define PASS		""
 
 /* optimized version of fb_val() */
 #define FB_VAL(r, g, b)	fb_val((r), (g), (b))
