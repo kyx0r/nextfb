@@ -11,6 +11,8 @@ pad.o: conf.h
 .c.o:
 	$(CC) -c $(CFLAGS) $<
 fbpad: $(OBJS)
+	cd ./fbpad_mkfn && ./gen.sh
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+	rm -f *.o
 clean:
 	rm -f *.o fbpad

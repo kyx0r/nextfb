@@ -1,5 +1,5 @@
 /* list of tags */
-#define TAGS		"xnlhtr01uiva "
+#define TAGS		"1234567890"
 #define TAGS_SAVED	""
 
 /* programs mapped to m-c, m-m, m-e */
@@ -11,9 +11,9 @@
 #define TERM		"linux"
 
 /* tinyfont files for regular, italic, and bold fonts */
-#define FR		"/path/to/font.tf"
-#define FI		NULL
-#define FB		NULL
+#define FR		"./ar.tf"
+#define FI		"./ai.tf"
+#define FB		"./ab.tf"
 
 /* foreground and background colors */
 #define FGCOLOR		COLOR0
@@ -32,7 +32,7 @@
 #define BRIGHTEN	1
 
 /* black */
-#define COLOR0		0x000000
+#define COLOR0		0xffffff
 #define COLOR8		0x555555
 /* red */
 #define COLOR1		0xaa0000
@@ -54,4 +54,4 @@
 #define COLORE		0x55ffff
 /* white */
 #define COLOR7		0xaaaaaa
-#define COLORF		0xffffff
+#define COLORF		0x000000
