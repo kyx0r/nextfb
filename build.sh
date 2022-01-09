@@ -18,9 +18,9 @@ run() {
 }
 
 install() {
-	[ -x vi ] || build
+	[ -x fbpad ] || build
 	run mkdir -p "$DESTDIR$PREFIX/bin/"
-	run cp -f vi "$DESTDIR$PREFIX/bin/fbpad"
+	run cp -f fbpad "$DESTDIR$PREFIX/bin/fbpad"
 }
 
 build() {

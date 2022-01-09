@@ -19,9 +19,9 @@ run() {
 }
 
 install() {
-	[ -x vi ] || build
+	[ -x mkfn ] || build
 	run mkdir -p "$DESTDIR$PREFIX/bin/"
-	run cp -f vi "$DESTDIR$PREFIX/bin/mkfn"
+	run cp -f mkfn "$DESTDIR$PREFIX/bin/mkfn"
 }
 
 build() {
