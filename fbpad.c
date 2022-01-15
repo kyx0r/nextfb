@@ -44,11 +44,11 @@
 #define POLLFLAGS	(POLLIN | POLLHUP | POLLERR | POLLNVAL)
 #define NTAGS		(int)(sizeof(tags) - 1)
 #define NTERMS		(NTAGS * 2)
-#define TERMOPEN(i)	(terms[i].fd)
+#define TERMOPEN(i)	(terms[i]->fd)
 #define TERMSNAP(i)	(strchr(TAGS_SAVED, tags[(i) % NTAGS]))
 
 static char tags[] = TAGS;
-static struct term terms[NTERMS];
+static struct term *terms[NTERMS];
 static int tops[NTAGS];		/* top terms of tags */
 static int split[NTAGS];	/* terms are shown together */
 static int ctag;		/* current tag */
@@ -102,7 +102,7 @@ static int nterm(void)
 /* term struct of cterm() */
 static struct term *tmain(void)
 {
-	return TERMOPEN(cterm()) ? &terms[cterm()] : NULL;
+	return TERMOPEN(cterm()) ? terms[cterm()] : NULL;
 }
 
 #define BRWID		2
@@ -130,14 +130,14 @@ static void t_hide(int idx, int save)
 {
 	if (save && TERMOPEN(idx) && TERMSNAP(idx))
 		scr_snap(idx);
-	term_save(&terms[idx]);
+	term_save(terms[idx]);
 }
 
 /* show=0 (hidden), show=1 (visible), show=2 (load), show=3 (redraw) */
 static int t_show(int idx, int show)
 {
 	t_conf(idx);
-	term_load(&terms[idx], show > 0);
+	term_load(terms[idx], show > 0);
 	if (show == 2)	/* redraw if scr_load() fails */
 		show += !TERMOPEN(idx) || !TERMSNAP(idx) || scr_load(idx);
 	if (show > 0)
@@ -336,7 +336,7 @@ static int pollterms(void)
 	ufds[0].events = POLLIN;
 	for (i = 0; i < NTERMS; i++) {
 		if (TERMOPEN(i)) {
-			ufds[n].fd = terms[i].fd;
+			ufds[n].fd = terms[i]->fd;
 			ufds[n].events = POLLIN;
 			term_idx[n++] = i;
 		}
@@ -376,7 +376,7 @@ static void mainloop(char **args)
 	termios.c_cflag &= ~(CSIZE | PARENB);
 	termios.c_cflag |= CS8;
 	tcsetattr(0, TCSAFLUSH, &termios);
-	term_load(&terms[cterm()], 1);
+	term_load(terms[cterm()], 1);
 	term_redraw(1);
 	if (args) {
 		cmdmode = 1;
@@ -432,7 +432,8 @@ int main(int argc, char **argv)
 	char *hide = "\x1b[2J\x1b[H\x1b[?25l";
 	char *show = "\x1b[?25h";
 	char **args = argv + 1;
-	if (fb_init(FBDEV)) {
+	int i;
+	if (fb_init(getenv("FBDEV"))) {
 		fprintf(stderr, "fbpad: failed to initialize the framebuffer\n");
 		return 1;
 	}
@@ -440,6 +441,8 @@ int main(int argc, char **argv)
 		fprintf(stderr, "fbpad: cannot find fonts\n");
 		return 1;
 	}
+	for (i = 0; i < NTERMS; i++)
+		terms[i] = term_make();
 	write(1, hide, strlen(hide));
 	signalsetup();
 	fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
@@ -447,6 +450,8 @@ int main(int argc, char **argv)
 		args++;
 	mainloop(args[0] ? args : NULL);
 	write(1, show, strlen(show));
+	for (i = 0; i < NTERMS; i++)
+		term_free(terms[i]);
 	pad_free();
 	scr_done();
 	fb_free();

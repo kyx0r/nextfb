@@ -2,14 +2,14 @@
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
 #define NLEVELS		(1 << 8)
 
-static struct fb_var_screeninfo vinfo;	/* linux-specific FB structure */
-static struct fb_fix_screeninfo finfo;	/* linux-specific FB structure */
-static char fbdev[1024];		/* FB device */
-static int fd;				/* FB device file descriptor */
-static char *fb;			/* mmap()ed FB memory */
-static int bpp;				/* bytes per pixel */
-static int nr, ng, nb;			/* color levels */
-static int rl, rr, gl, gr, bl, br;	/* shifts per color */
+static struct fb_var_screeninfo vinfo;		/* linux-specific FB structure */
+static struct fb_fix_screeninfo finfo;		/* linux-specific FB structure */
+static char fbdev[1024];			/* FB device */
+static int fd;					/* FB device file descriptor */
+static char *fb;				/* mmap()ed FB memory */
+static int bpp;					/* bytes per pixel */
+static int nr, ng, nb;				/* color levels */
+static int rl, rr, gl, gr, bl, br;		/* shifts per color */
 static unsigned int xres, yres, xoff, yoff;	/* drawing region */
 
 static int fb_len(void)
@@ -85,7 +85,7 @@ int fb_init(char *dev)
 		*geom = '\0';
 		sscanf(geom + 1, "%ux%u%u%u", &xres, &yres, &xoff, &yoff);
 	}
-	snprintf(fbdev, sizeof(fbdev), "%s", dev);
+	snprintf(fbdev, sizeof(fbdev), "%s", path);
 	fd = open(path, O_RDWR);
 	if (fd < 0)
 		goto failed;

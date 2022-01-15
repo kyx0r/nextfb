@@ -3,11 +3,12 @@
 #define MIN(a, b)	((a) < (b) ? (a) : (b))
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
 #define LEN(a)		(sizeof(a) / sizeof((a)[0]))
+#define p(s, ...)\
+	{FILE *f = fopen("file", "a");\
+	fprintf(f, s, ##__VA_ARGS__);\
+	fclose(f);}\
 
 #define ESC		27		/* escape code */
-#define NCOLS		256		/* maximum number of screen columns */
-#define NROWS		128		/* maximum number of screen rows */
-#define NDOTS		1024		/* maximum pixels in glyphs */
 #define NHIST		128		/* scrolling history lines */
 
 /* isdw.c */
@@ -24,11 +25,11 @@ struct term_state {
 };
 
 struct term {
-	int screen[NROWS * NCOLS];	/* screen content */
-	int hist[NHIST * NCOLS];	/* scrolling history */
-	int fgs[NROWS * NCOLS];		/* foreground color */
-	int bgs[NROWS * NCOLS];		/* background color */
-	int dirty[NROWS];		/* changed rows in lazy mode */
+	int *screen;			/* screen content */
+	int *hist;			/* scrolling history */
+	int *fgs;			/* foreground color */
+	int *bgs;			/* background color */
+	int *dirty;			/* changed rows in lazy mode */
 	struct term_state cur, sav;	/* terminal saved state */
 	int fd;				/* terminal file descriptor */
 	int hrow;			/* the next history row in hist[] */
