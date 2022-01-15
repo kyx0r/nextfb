@@ -16,8 +16,8 @@
 #define FB		"./ab.tf"
 
 /* foreground and background colors */
-#define FGCOLOR		COLOR0
-#define BGCOLOR		COLORF
+#define FGCOLOR		COLORF
+#define BGCOLOR		COLOR0
 
 /* where to write the screen shot */
 #define SCRSHOT		"/tmp/scr"
@@ -32,7 +32,7 @@
 #define BRIGHTEN	1
 
 /* black */
-#define COLOR0		0xffffff
+#define COLOR0		0x000000
 #define COLOR8		0x555555
 /* red */
 #define COLOR1		0xaa0000
@@ -54,4 +54,4 @@
 #define COLORE		0x55ffff
 /* white */
 #define COLOR7		0xaaaaaa
-#define COLORF		0x000000
+#define COLORF		0xffffff
