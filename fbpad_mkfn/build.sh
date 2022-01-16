@@ -30,11 +30,11 @@ build() {
 
 mkfn() {
 	FP="/root/klec/cgi/terminus-ttf-4.47.0"
-	OP="-h20 -w12"
-	SZ="16.5h135v125r-3"
+	OP="-h18 -w9"
+	SZ="18h96v96"
 	./mkfn $OP $FP/TerminusTTF-4.47.0.ttf:$SZ		>../ar.tf
 	./mkfn $OP $FP/TerminusTTF-Italic-4.47.0.ttf:$SZ	>../ai.tf
-	./mkfn $OP $FP/TerminusTTF-Bold-4.47.0.ttf:$SZ	>../ab.tf
+	./mkfn $OP $FP/TerminusTTF-Bold-4.47.0.ttf:$SZ		>../ab.tf
 }
 
 if [ "$#" -gt 0 ]; then
