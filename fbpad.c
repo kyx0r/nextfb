@@ -272,7 +272,7 @@ static void directkey(void)
 			if (nterm() != cterm())
 				t_set(nterm());
 			return;
-		case CTRLKEY('q'):
+		case 'q':
 			exitit = 1;
 			return;
 		case 's':
