@@ -581,8 +581,8 @@ void term_scrl(int scrl)
 		int *_fgs = i < hpos ? NULL : term->fgs + off;
 		int *_bgs = i < hpos ? NULL : term->bgs + off;
 		for (j = 0; j < pad_cols(); j++)
-			pad_put(_scr[j], i, j, _fgs ? _fgs[j] : BGCOLOR,
-						_bgs ? _bgs[j] : FGCOLOR);
+			pad_put(_scr[j], i, j, _fgs ? _fgs[j] : FGCOLOR,
+						_bgs ? _bgs[j] : BGCOLOR);
 	}
 }
 
