@@ -6,6 +6,7 @@ CFLAGS="\
 -Wno-missing-field-initializers \
 -Wno-unused-parameter \
 -Wfatal-errors -std=c99 \
+-lm \
 -D_POSIX_C_SOURCE=200809L $CFLAGS"
 
 OS="$(uname)"
