@@ -3,9 +3,9 @@
 #define TAGS_SAVED	""
 
 /* programs mapped to m-c, m-m, m-e */
-#define SHELL		{"sh"}
-#define EDITOR		{"vi"}
-#define MAIL		{"mailx", "-f", "+inbox"}
+#define SHELL		{"sh", NULL}
+#define EDITOR		{"vi", NULL}
+#define MAIL		{"mailx", "-f", "+inbox", NULL}
 
 /* TERM variable for launched programs */
 #define TERM		"linux"

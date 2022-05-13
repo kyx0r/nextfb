@@ -231,9 +231,9 @@ static void listtags(void)
 
 static void directkey(void)
 {
-	char *shell[32] = SHELL;
-	char *mail[32] = MAIL;
-	char *editor[32] = EDITOR;
+	char *shell[] = SHELL;
+	char *mail[] = MAIL;
+	char *editor[] = EDITOR;
 	int c = readchar();
 	if (*PASS && locked) {
 		if (c == '\r') {
