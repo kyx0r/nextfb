@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include "mkfn.h"
 #include "chars.h"
+#define LEN(a)		(sizeof(a) / sizeof((a)[0]))
 #include "isdw.c"
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
