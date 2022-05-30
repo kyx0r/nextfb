@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#define LEN(a)			(sizeof(a) / sizeof((a)[0]))
+#include "isdw.c"
 #include "chars.h"
 
 #include <ft2build.h>
@@ -55,7 +57,7 @@ static int glyphload(FT_Face face, int c, int autohint)
 static int facedescender(FT_Face face)
 {
 	char *s = "gy_pj/\\|Q";
-	int ret = 0;
+	unsigned int ret = 0;
 	for (; *s; s++)
 		if (!glyphload(face, *s, 0))
 			ret = MAX(ret, face->glyph->bitmap.rows -
@@ -139,12 +141,12 @@ int mkfn_bitmap(char *dst, int c, int rows, int cols)
 	if (!dst)
 		return 0;
 	bc = c & DWCHAR ? cols : 0;
-	nc = LIMIT(face->glyph->bitmap.width - bc, 0, cols);
+	nc = LIMIT((int)face->glyph->bitmap.width - bc, 0, cols);
 	sc = LIMIT(face->glyph->bitmap_left - bc + fn_sc[i], 0, cols - nc);
 	sr = rows + fn_sr[i] - fn_desc[i] - face->glyph->bitmap_top;
 	br = MAX(0, -sr);
 	sr = LIMIT(sr, 0, rows);
-	nr = MIN(rows - sr, face->glyph->bitmap.rows - br);
+	nr = MIN(rows - sr, (int)face->glyph->bitmap.rows - br);
 	memset(bits, 0, rows * cols);
 	src = face->glyph->bitmap.buffer;
 	bw = face->glyph->bitmap.pitch;
@@ -190,7 +192,7 @@ static int fn_glyphs(int *glyphs)
 {
 	int i, j;
 	int n = 0;
-	for (i = 0; i < sizeof(chars) / sizeof(chars[0]); i++) {
+	for (i = 0; i < (int)LEN(chars); i++) {
 		for (j = chars[i][0]; j <= chars[i][1] && n < NGLYPHS; j++) {
 			if (!mkfn_bitmap(NULL, j, rows, cols))
 				glyphs[n++] = j;

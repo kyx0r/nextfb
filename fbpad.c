@@ -37,7 +37,7 @@
 #include "term.c"
 #include "pad.c"
 #include "draw.c"
-#include "isdw.c"
+#include "mkfn/isdw.c"
 #include "scrsnap.c"
 
 #define CTRLKEY(x)	((x) - 96)
