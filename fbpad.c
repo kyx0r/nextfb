@@ -44,7 +44,6 @@
 #define POLLFLAGS	(POLLIN | POLLHUP | POLLERR | POLLNVAL)
 #define NTAGS		(int)(sizeof(tags) - 1)
 #define NTERMS		(NTAGS * 2)
-#define TERMOPEN(i)	(terms[i]->fd)
 #define TERMSNAP(i)	(strchr(TAGS_SAVED, tags[(i) % NTAGS]))
 
 static char tags[] = TAGS;
@@ -60,6 +59,32 @@ static int taglock;		/* disable tag switching */
 static char pass[1024];
 static unsigned int passlen;
 static int cmdmode;		/* execute a command and exit */
+
+static void reverse_in_place(char *str, int len)
+{
+	char *p1 = str;
+	char *p2 = str + len - 1;
+	while (p1 < p2) {
+		char tmp = *p1;
+		*p1++ = *p2;
+		*p2-- = tmp;
+	}
+}
+
+char *itoa(int n, char s[])
+{
+	int i = 0, sign;
+	if ((sign = n) < 0)		/* record sign */
+		n = -n;			/* make n positive */
+	do {				/* generate digits in reverse order */
+		s[i++] = n % 10 + '0';	/* get next digit */
+	} while ((n /= 10) > 0);	/* delete it */
+	if (sign < 0)
+		s[i++] = '-';
+	s[i] = '\0';
+	reverse_in_place(s, i);
+	return &s[i];
+}
 
 static int readchar(void)
 {
@@ -92,7 +117,7 @@ static int nterm(void)
 {
 	int n = (cterm() + 1) % NTERMS;
 	while (n != cterm()) {
-		if (TERMOPEN(n))
+		if (terms[n]->fd)
 			break;
 		n = (n + 1) % NTERMS;
 	}
@@ -102,7 +127,7 @@ static int nterm(void)
 /* term struct of cterm() */
 static struct term *tmain(void)
 {
-	return TERMOPEN(cterm()) ? terms[cterm()] : NULL;
+	return terms[cterm()]->fd ? terms[cterm()] : NULL;
 }
 
 #define BRWID		2
@@ -128,7 +153,7 @@ static void t_conf(int idx)
 
 static void t_hide(int idx, int save)
 {
-	if (save && TERMOPEN(idx) && TERMSNAP(idx))
+	if (save && terms[idx]->fd && TERMSNAP(idx))
 		scr_snap(idx);
 	term_save(terms[idx]);
 }
@@ -139,7 +164,7 @@ static int t_show(int idx, int show)
 	t_conf(idx);
 	term_load(terms[idx], show > 0);
 	if (show == 2)	/* redraw if scr_load() fails */
-		show += !TERMOPEN(idx) || !TERMSNAP(idx) || scr_load(idx);
+		show += !terms[idx]->fd || !TERMSNAP(idx) || scr_load(idx);
 	if (show > 0)
 		term_redraw(show == 3);
 	return show;
@@ -214,9 +239,9 @@ static void listtags(void)
 	pad_put(' ', r, c++, fg | FN_B, bg);
 	for (i = 0; i < NTAGS && c + 2 < pad_cols(); i++) {
 		int nt = 0;
-		if (TERMOPEN(i))
+		if (terms[i]->fd)
 			nt++;
-		if (TERMOPEN(aterm(i)))
+		if (terms[aterm(i)]->fd)
 			nt++;
 		pad_put(i == ctag ? '(' : ' ', r, c++, fg, bg);
 		if (TERMSNAP(i))
@@ -231,9 +256,7 @@ static void listtags(void)
 
 static void directkey(void)
 {
-	char *shell[] = SHELL;
-	char *mail[] = MAIL;
-	char *editor[] = EDITOR;
+	static int tfsz;
 	int c = readchar();
 	if (*PASS && locked) {
 		if (c == '\r') {
@@ -250,13 +273,16 @@ static void directkey(void)
 	if (c == ESC) {
 		switch ((c = readchar())) {
 		case 'c':
-			t_exec(shell);
+			t_exec((char*[])SHELL);
 			return;
 		case 'm':
-			t_exec(mail);
+			t_exec((char*[])MAIL);
 			return;
 		case 'e':
-			t_exec(editor);
+			t_exec((char*[])EDITOR);
+			return;
+		case 't':
+			tfsz = !tfsz;
 			return;
 		case 'j':
 		case 'k':
@@ -308,8 +334,54 @@ static void directkey(void)
 			if (tmain())
 				term_send(ESC);
 		}
-	}
-	if (c != -1 && tmain())
+	} else if (tfsz) {
+		char *tf1[] = TFGENFR;
+		char *tf2[] = TFGENFI;
+		char *tf3[] = TFGENFB;
+		char **tfgen = tfsz == 1 ? tf1 : tfsz == 2 ? tf2 : tf3;
+		char height[] = "-h    ";
+		char width[] = "-w     ";
+		char size[] = "               ";
+		static int tfh, tfw, tfs;
+		if (c == 'j' || c == 'k') {
+			c == 'k' ? --tfh : ++tfh;
+		} else if (c == 'h' || c == 'l') {
+			c == 'l' ? --tfw : ++tfw;
+		} else if (c == 'u' || c == 'i') {
+			c == 'i' ? --tfs : ++tfs;
+		} else if (c == 'n') {
+			tfsz = tfsz > 3 ? 1 : tfsz+1;
+			return;
+		} else
+			return;
+		tfh = tfh <= 1 ? atoi(tfgen[1]+2) : tfh;
+		tfw = tfw <= 1 ? atoi(tfgen[2]+2) : tfw;
+		tfs = tfs <= 1 ? atoi(tfgen[6]) : tfs;
+		itoa(tfh, height+2);
+		itoa(tfw, width+2);
+		strcpy(itoa(tfs, size), tfgen[6]+2);
+		tfgen[1] = height;
+		tfgen[2] = width;
+		tfgen[6] = size;
+		spawn(tfgen);
+		pad_free();
+		if (pad_init()) {
+			exitit = 1;
+			return;
+		}
+		for (int i = 0; i < NTERMS; i++) {
+			int pid = terms[i]->pid;
+			int fd = terms[i]->fd;
+			term_free(terms[i]);
+			terms[i] = term_make();
+			terms[i]->pid = pid;
+			terms[i]->fd = fd;
+		}
+		term_load(terms[cterm()], 1);
+		term_reset();
+		term_redraw(1);
+		term_send('');
+	} else if (c != -1 && tmain())
 		term_send(c);
 }
 
@@ -335,7 +407,7 @@ static int pollterms(void)
 	ufds[0].fd = 0;
 	ufds[0].events = POLLIN;
 	for (i = 0; i < NTERMS; i++) {
-		if (TERMOPEN(i)) {
+		if (terms[i]->fd) {
 			ufds[n].fd = terms[i]->fd;
 			ufds[n].events = POLLIN;
 			term_idx[n++] = i;
@@ -448,6 +520,8 @@ int main(int argc, char **argv)
 	fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
 	while (args[0] && args[0][0] == '-')
 		args++;
+	int errfd = open("/dev/null", O_WRONLY);
+	dup2(errfd, 2);
 	mainloop(args[0] ? args : NULL);
 	write(1, show, strlen(show));
 	for (i = 0; i < NTERMS; i++)
@@ -455,5 +529,6 @@ int main(int argc, char **argv)
 	pad_free();
 	scr_done();
 	fb_free();
+	close(errfd);
 	return 0;
 }

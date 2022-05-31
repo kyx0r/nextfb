@@ -1,19 +1,26 @@
+#ifndef PWD
+#define PWD		"."
+#endif
+
 /* list of tags */
 #define TAGS		"1234567890"
 #define TAGS_SAVED	""
+
+/* tinyfont files for regular, italic, and bold fonts */
+#define FR		PWD"/ar.tf"
+#define FI		PWD"/ai.tf"
+#define FB		PWD"/ab.tf"
 
 /* programs mapped to m-c, m-m, m-e */
 #define SHELL		{"sh", NULL}
 #define EDITOR		{"vi", NULL}
 #define MAIL		{"mailx", "-f", "+inbox", NULL}
+#define TFGENFR		{PWD"/mkfn/mkfn", "-h18", "-w9", "-o", FR, "/root/klec/cgi/terminus-ttf-4.47.0/TerminusTTF-4.47.0.ttf", "18h96v96", NULL}
+#define TFGENFI		{PWD"/mkfn/mkfn", "-h18", "-w9", "-o", FI, "/root/klec/cgi/terminus-ttf-4.47.0/TerminusTTF-Italic-4.47.0.ttf", "18h96v96", NULL}
+#define TFGENFB		{PWD"/mkfn/mkfn", "-h18", "-w9", "-o", FB, "/root/klec/cgi/terminus-ttf-4.47.0/TerminusTTF-Bold-4.47.0.ttf", "18h96v96", NULL}
 
 /* TERM variable for launched programs */
 #define TERM		"linux"
-
-/* tinyfont files for regular, italic, and bold fonts */
-#define FR		"./ar.tf"
-#define FI		"./ai.tf"
-#define FB		"./ab.tf"
 
 /* foreground and background colors */
 #define FGCOLOR		COLORF

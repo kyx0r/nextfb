@@ -374,6 +374,18 @@ static void envset(char **d, char *env)
 	d[i] = env;
 }
 
+void spawn(char **arg)
+{
+	pid_t pid;
+	if ((pid = fork()) == -1) {
+		return;
+	} else if (pid == 0) {
+		execvp(arg[0], arg);
+		return;
+	}
+	waitpid(pid, NULL, 0);
+}
+
 extern char **environ;
 void term_exec(char **args)
 {
@@ -400,7 +412,6 @@ void term_exec(char **args)
 	fcntl(term->fd, F_SETFD, fcntl(term->fd, F_GETFD) | FD_CLOEXEC);
 	fcntl(term->fd, F_SETFL, fcntl(term->fd, F_GETFL) | O_NONBLOCK);
 	term_reset();
-	memset(term->hist, 0, NHIST * pad_cols() * sizeof(term->hist[0]));
 }
 
 static void misc_save(struct term_state *state)

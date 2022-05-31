@@ -45,6 +45,7 @@ void term_save(struct term *term);
 
 void term_read(void);
 void term_send(int c);
+void spawn(char **args);
 void term_exec(char **args);
 void term_end(void);
 void term_screenshot(void);

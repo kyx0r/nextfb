@@ -24,7 +24,7 @@ install() {
 }
 
 build() {
-	run "$CC" "fbpad.c" $CFLAGS -o fbpad
+	run "$CC" "fbpad.c" -DPWD=\"$(pwd)\" $CFLAGS -o fbpad
 }
 
 if [ "$#" -gt 0 ]; then

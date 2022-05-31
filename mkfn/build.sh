@@ -33,9 +33,9 @@ mkfn() {
 	FP="/root/klec/cgi/terminus-ttf-4.47.0"
 	OP="-h18 -w9"
 	SZ="18h96v96"
-	./mkfn $OP $FP/TerminusTTF-4.47.0.ttf:$SZ		>../ar.tf
-	./mkfn $OP $FP/TerminusTTF-Italic-4.47.0.ttf:$SZ	>../ai.tf
-	./mkfn $OP $FP/TerminusTTF-Bold-4.47.0.ttf:$SZ		>../ab.tf
+	run ./mkfn $OP -o ../ar.tf $FP/TerminusTTF-4.47.0.ttf $SZ
+	run ./mkfn $OP -o ../ai.tf $FP/TerminusTTF-Italic-4.47.0.ttf $SZ
+	run ./mkfn $OP -o ../ab.tf $FP/TerminusTTF-Bold-4.47.0.ttf $SZ
 }
 
 if [ "$#" -gt 0 ]; then
