@@ -381,7 +381,9 @@ static void directkey(void)
 		term_reset();
 		term_redraw(1);
 		term_send('');
-	} else if (c != -1 && tmain())
+		return;
+	}
+	if (c != -1 && tmain())
 		term_send(c);
 }
 
