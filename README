@@ -19,7 +19,7 @@ m-p		show tag summary
 m-o		jump to the previous tag
 m-tab		show the next terminal
 m-s		create a text screenshot (SCRSHOT)
-m-y		redraw the terminal
+m-l		redraw the terminal
 c-m-l		lock the screen; use PASS to unlock
 c-m-o		disable/enable tag switching
 m-q		quit fbpad
@@ -27,6 +27,24 @@ m-,		scroll up
 m-.		scroll down
 m-=		split tag horizontally/vertically
 m--		unsplit tag
+==============	=======================================
+m-t		enter font adjustment mode where: (again to exit)
+h		decrease font width by 1
+l		increase font width by 1
+k		decrease font height by 1
+j		increase font height by 1
+i		decrease font size by 1
+u		increase font size by 1
+n		select next font, italic, bold or normal
+==============	=======================================
+m-x		enter yank mode or reset yank buffer
+m-v		paste yank buffer left to right
+m-b		paste yank buffer right to left
+m-y		enter yank mode where: (again to exit)
+j		move down a row
+k		move up a row
+h		select char left
+l		select char right
 ==============	=======================================
 
 To execute only a single program in fbpad, the program and its

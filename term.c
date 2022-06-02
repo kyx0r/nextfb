@@ -416,7 +416,7 @@ void term_exec(char **args)
 	term_reset();
 }
 
-static void misc_save(struct term_state *state)
+void misc_save(struct term_state *state)
 {
 	state->row = row;
 	state->col = col;
@@ -425,7 +425,7 @@ static void misc_save(struct term_state *state)
 	state->mode = mode;
 }
 
-static void misc_load(struct term_state *state)
+void misc_load(struct term_state *state)
 {
 	row = state->row;
 	col = state->col;
@@ -554,7 +554,6 @@ void term_screenshot(void)
 }
 
 /* high-level drawing functions */
-
 static void empty_rows(int sr, int er)
 {
 	screen_reset(OFFSET(sr, 0), (er - sr) * pad_cols());
@@ -647,6 +646,25 @@ static void move_cursor(int r, int c)
 	col = LIMIT(c, 0, pad_cols() - 1);
 	draw_cursor(1);
 	mode = BIT_SET(mode, MODE_WRAPREADY, 0);
+}
+
+int term_yank(int c)
+{
+	static int sel;
+	if (c == 'h' || c == 'l')
+		move_cursor(row, col + (c == 'l' ? 1 : -1));
+	else if (c == 'j' || c == 'k')
+		move_cursor(row + (c == 'k' ? 1 : -1), col);
+	if (sel != c) {
+		_draw_row(row);
+		draw_cursor(1);
+	}
+	sel = c;
+	if (c == 'h')
+		pad_put(screen[OFFSET(row, col+1)], row, col+1, FGCOLOR, COLOR3);
+	else if (c == 'l')
+		pad_put(screen[OFFSET(row, col-1)], row, col-1, FGCOLOR, COLOR3);
+	return screen[OFFSET(row, col)];
 }
 
 static void set_region(int t, int b)

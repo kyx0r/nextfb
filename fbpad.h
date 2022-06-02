@@ -69,6 +69,8 @@ struct term {
 	int rows, cols;
 };
 
+void misc_save(struct term_state *state);
+void misc_load(struct term_state *state);
 void term_load(struct term *term, int visible);
 void term_save(struct term *term);
 void term_read(void);
@@ -77,6 +79,7 @@ void spawn(char **args);
 void term_exec(char **args);
 void term_end(void);
 void term_screenshot(void);
+int term_yank(int c);
 void term_scrl(int pos);
 void term_redraw(int all);
 

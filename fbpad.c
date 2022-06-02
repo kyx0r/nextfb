@@ -259,6 +259,10 @@ static void listtags(void)
 static void directkey(void)
 {
 	static int tfsz;
+	static int yank;
+	static char *yank_buf;
+	static int yank_len;
+	static int yank_sz;
 	int c = readchar();
 	if (*PASS && locked) {
 		if (c == '\r') {
@@ -286,6 +290,29 @@ static void directkey(void)
 		case 't':
 			tfsz = !tfsz;
 			return;
+		case 'v':
+			for (c = 0; c < yank_len; c++)
+				term_send(yank_buf[c]);
+			return;
+		case 'b':
+			for (c = yank_len - 1; c >= 0; c--)
+				term_send(yank_buf[c]);
+			return;
+		case 'x':
+			yank_len = 0;
+			if (yank)
+				goto yankit;
+		case 'y':
+			yank = !yank;
+			if (!yank)
+				misc_load(&terms[cterm()]->cur);
+			else
+				misc_save(&terms[cterm()]->cur);
+			if (!yank_buf) {
+				yank_sz = 128;
+				yank_buf = malloc(yank_sz);
+			}
+			goto yankit;
 		case 'j':
 		case 'k':
 			t_set(aterm(cterm()));
@@ -306,7 +333,7 @@ static void directkey(void)
 		case 's':
 			term_screenshot();
 			return;
-		case 'y':
+		case 'l':
 			term_redraw(1);
 			return;
 		case CTRLKEY('l'):
@@ -384,6 +411,14 @@ static void directkey(void)
 		term_load(terms[i], 1);
 		term_redraw(1);
 		term_send('');
+		return;
+	} else if (yank) {
+		yankit:
+		if (++yank_len == yank_sz) {
+			yank_sz *= 2;
+			yank_buf = realloc(yank_buf, yank_sz);
+		}
+		yank_buf[yank_len] = term_yank(c);
 		return;
 	}
 	if (c != -1 && tmain())
