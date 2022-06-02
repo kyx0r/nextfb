@@ -481,8 +481,10 @@ void term_redraw(int all)
 			lazy = 1;
 			memset(dirty, 1, pad_rows() * sizeof(*dirty));
 		}
-		if (all || !term->hpos)
+		if (!term->hpos)
 			lazy_flush();
+		else if (all)
+			term_scrl(0);
 	} else {
 		if (all)
 			pad_fill(0, -1, 0, -1, 0);

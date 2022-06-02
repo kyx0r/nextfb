@@ -64,10 +64,11 @@ void pad_conf(int roff, int coff, int _rows, int _cols)
 
 void pad_free(struct pad_state *state)
 {
-	free(pstate->gc_mem);
+	free(state->gc_mem);
 	for (int i = 0; i < 3; i++)
 		if (state->fonts[i])
 			font_free(state->fonts[i]);
+	free(state);
 }
 
 #define CR(a)		(((a) >> 16) & 0x0000ff)

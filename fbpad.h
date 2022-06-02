@@ -9,7 +9,7 @@
 	fclose(f);}\
 
 #define ESC		27		/* escape code */
-#define NHIST		128		/* scrolling history lines */
+#define NHIST		512		/* scrolling history lines */
 
 /* isdw.c */
 #define DWCHAR		0x40000000u	/* 2nd half of a fullwidth char */
