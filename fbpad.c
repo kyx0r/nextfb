@@ -48,17 +48,18 @@
 
 static char tags[] = TAGS;
 static struct term *terms[NTERMS];
-static int tops[NTAGS];		/* top terms of tags */
-static int split[NTAGS];	/* terms are shown together */
-static int ctag;		/* current tag */
-static int ltag;		/* the last tag */
+static struct pad_state *ipstate;	/* initial pad state */
+static int tops[NTAGS];			/* top terms of tags */
+static int split[NTAGS];		/* terms are shown together */
+static int ctag;			/* current tag */
+static int ltag;			/* the last tag */
 static int exitit;
-static int hidden;		/* do not touch the framebuffer */
+static int hidden;			/* do not touch the framebuffer */
 static int locked;
-static int taglock;		/* disable tag switching */
+static int taglock;			/* disable tag switching */
 static char pass[1024];
 static unsigned int passlen;
-static int cmdmode;		/* execute a command and exit */
+static int cmdmode;			/* execute a command and exit */
 
 static void reverse_in_place(char *str, int len)
 {
@@ -179,6 +180,7 @@ static int t_hideshow(int oidx, int save, int nidx, int show)
 	t_hide(oidx, save);
 	if (show && split[otag] && otag == ntag)
 		pad_border(0, BRWID);
+	pad_pset(terms[nidx]->ps);
 	ret = t_show(nidx, show);
 	if (show && split[ntag])
 		pad_border(BRCLR, BRWID);
@@ -354,8 +356,8 @@ static void directkey(void)
 			return;
 		} else
 			return;
-		tfh = tfh <= 1 ? atoi(tfgen[1]+2) : tfh;
-		tfw = tfw <= 1 ? atoi(tfgen[2]+2) : tfw;
+		tfh = tfh <= 1 ? pad_crows() : tfh;
+		tfw = tfw <= 1 ? pad_ccols() : tfw;
 		tfs = tfs <= 1 ? atoi(tfgen[6]) : tfs;
 		itoa(tfh, height+2);
 		itoa(tfw, width+2);
@@ -364,21 +366,22 @@ static void directkey(void)
 		tfgen[2] = width;
 		tfgen[6] = size;
 		spawn(tfgen);
-		pad_free();
-		if (pad_init()) {
+		int i = cterm();
+		if (terms[i]->ps != ipstate)
+			pad_free(terms[i]->ps);
+		if (!pad_init()) {
 			exitit = 1;
 			return;
 		}
-		for (int i = 0; i < NTERMS; i++) {
-			int pid = terms[i]->pid;
-			int fd = terms[i]->fd;
-			term_free(terms[i]);
-			terms[i] = term_make();
-			terms[i]->pid = pid;
-			terms[i]->fd = fd;
-		}
-		term_load(terms[cterm()], 1);
-		term_reset();
+		pad_pset(pstate);
+		int pid = terms[i]->pid;
+		int fd = terms[i]->fd;
+		term_free(terms[i]);
+		terms[i] = term_make();
+		terms[i]->pid = pid;
+		terms[i]->fd = fd;
+		misc_save(&terms[i]->cur);
+		term_load(terms[i], 1);
 		term_redraw(1);
 		term_send('');
 		return;
@@ -511,7 +514,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "fbpad: failed to initialize the framebuffer\n");
 		return 1;
 	}
-	if (pad_init()) {
+	if (!(ipstate = pad_init())) {
 		fprintf(stderr, "fbpad: cannot find fonts\n");
 		return 1;
 	}
@@ -528,7 +531,7 @@ int main(int argc, char **argv)
 	write(1, show, strlen(show));
 	for (i = 0; i < NTERMS; i++)
 		term_free(terms[i]);
-	pad_free();
+	pad_free(ipstate);
 	scr_done();
 	fb_free();
 	close(errfd);

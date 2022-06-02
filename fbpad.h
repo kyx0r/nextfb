@@ -17,6 +17,34 @@
 int isdw(int c);
 int iszw(int c);
 
+/* pad.c */
+struct pad_state {
+	int fbroff, fbcoff, fbrows, fbcols;
+	int rows, cols;
+	int fnrows, fncols; /* character height, width */
+	int bpp;
+	struct font *fonts[3];
+	char *gc_mem;		/* cached glyph's memory */
+};
+extern struct pad_state *pstate;
+
+#define FN_I		0x01000000	/* italic font */
+#define FN_B		0x02000000	/* bold font */
+#define FN_C		0x00ffffff	/* font color mask */
+#define pad_rows() pstate->rows
+#define pad_cols() pstate->cols
+#define pad_crows() pstate->fnrows
+#define pad_ccols() pstate->fncols
+
+void pad_pset(struct pad_state *state);
+struct pad_state *pad_init(void);
+void pad_free(struct pad_state *state);
+void pad_conf(int row, int col, int rows, int cols);
+void pad_put(int ch, int r, int c, int fg, int bg);
+void pad_fill(int sr, int er, int sc, int ec, int c);
+void pad_border(unsigned c, int wid);
+char *pad_fbdev(void);
+
 /* term.c */
 struct term_state {
 	int row, col;
@@ -30,6 +58,7 @@ struct term {
 	int *fgs;			/* foreground color */
 	int *bgs;			/* background color */
 	int *dirty;			/* changed rows in lazy mode */
+	struct pad_state *ps;		/* pad_state for this term */
 	struct term_state cur, sav;	/* terminal saved state */
 	int fd;				/* terminal file descriptor */
 	int hrow;			/* the next history row in hist[] */
@@ -42,7 +71,6 @@ struct term {
 
 void term_load(struct term *term, int visible);
 void term_save(struct term *term);
-
 void term_read(void);
 void term_send(int c);
 void spawn(char **args);
@@ -51,24 +79,6 @@ void term_end(void);
 void term_screenshot(void);
 void term_scrl(int pos);
 void term_redraw(int all);
-
-/* pad.c */
-#define FN_I		0x01000000	/* italic font */
-#define FN_B		0x02000000	/* bold font */
-#define FN_C		0x00ffffff	/* font color mask */
-
-int pad_init(void);
-void pad_free(void);
-void pad_conf(int row, int col, int rows, int cols);
-int pad_font(char *fr, char *fi, char *fb);
-void pad_put(int ch, int r, int c, int fg, int bg);
-int pad_rows(void);
-int pad_cols(void);
-void pad_fill(int sr, int er, int sc, int ec, int c);
-void pad_border(unsigned c, int wid);
-char *pad_fbdev(void);
-int pad_crows(void);
-int pad_ccols(void);
 
 /* font.c */
 struct font *font_open(char *path);

@@ -243,6 +243,7 @@ struct term *term_make(void)
 	term->fgs = malloc(pad_rows() * pad_cols() * sizeof(term->fgs[0]));
 	term->bgs = malloc(pad_rows() * pad_cols() * sizeof(term->bgs[0]));
 	term->dirty = malloc(pad_rows() * sizeof(term->dirty[0]));
+	term->ps = pstate;
 	term_zero(term);
 	return term;
 }
@@ -390,6 +391,7 @@ extern char **environ;
 void term_exec(char **args)
 {
 	int master, slave;
+	pad_pset(term->ps);
 	term_zero(term);
 	if (_openpty(&master, &slave) == -1)
 		return;
