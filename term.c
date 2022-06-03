@@ -654,7 +654,7 @@ int term_yank(int c)
 	if (c == 'h' || c == 'l')
 		move_cursor(row, col + (c == 'l' ? 1 : -1));
 	else if (c == 'j' || c == 'k')
-		move_cursor(row + (c == 'k' ? 1 : -1), col);
+		move_cursor(row + (c == 'j' ? 1 : -1), col);
 	if (sel != c) {
 		_draw_row(row);
 		draw_cursor(1);

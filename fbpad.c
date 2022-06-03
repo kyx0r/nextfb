@@ -304,10 +304,13 @@ static void directkey(void)
 				goto yankit;
 		case 'y':
 			yank = !yank;
-			if (!yank)
-				misc_load(&terms[cterm()]->cur);
-			else
+			if (yank)
 				misc_save(&terms[cterm()]->cur);
+			else {	/* restore old cursor pos */
+				misc_load(&terms[cterm()]->cur);
+				term_yank(0);
+				return;
+			}
 			if (!yank_buf) {
 				yank_sz = 128;
 				yank_buf = malloc(yank_sz);
@@ -414,11 +417,11 @@ static void directkey(void)
 		return;
 	} else if (yank) {
 		yankit:
-		if (++yank_len == yank_sz) {
+		if (yank_len + 1 == yank_sz) {
 			yank_sz *= 2;
 			yank_buf = realloc(yank_buf, yank_sz);
 		}
-		yank_buf[yank_len] = term_yank(c);
+		yank_buf[yank_len++] = term_yank(c);
 		return;
 	}
 	if (c != -1 && tmain())
