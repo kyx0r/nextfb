@@ -149,10 +149,11 @@ static int fn_glyphs(int *glyphs)
 	int n = 0, j;
 	for (i = 0; i < sizeof(chars) / sizeof(chars[0]); i++) {
 		for (j = chars[i][0]; j <= chars[i][1] && n < NGLYPHS; j++) {
-			if (!mkfn_bitmap(NULL, j, rows, cols))
+			if (!mkfn_bitmap(NULL, j, rows, cols)) {
 				glyphs[n++] = j;
-			if (!mkfn_bitmap(NULL, j, rows, cols) && isdw(j))
-				glyphs[n++] = DWCHAR | j;
+				if (isdw(j))
+					glyphs[n++] = DWCHAR | j;
+			}
 		}
 	}
 	return n;
