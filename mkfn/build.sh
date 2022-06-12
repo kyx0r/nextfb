@@ -21,12 +21,15 @@ run() {
 
 install() {
 	[ -x mkfn ] || build
+	[ -x mkfn_bdf ] || build
 	run mkdir -p "$DESTDIR$PREFIX/bin/"
 	run cp -f mkfn "$DESTDIR$PREFIX/bin/mkfn"
+	run cp -f mkfn_bdf "$DESTDIR$PREFIX/bin/mkfn_bdf"
 }
 
 build() {
 	run "$CC" "mkfn.c" $CFLAGS -o mkfn
+	run "$CC" "mkfn_bdf.c" $CFLAGS -o mkfn_bdf
 }
 
 mkfn() {
