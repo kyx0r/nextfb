@@ -41,6 +41,13 @@ mkfn() {
 	run ./mkfn $OP -o ../ab.tf $FP/TerminusTTF-Bold-4.47.0.ttf $SZ
 }
 
+mkfn_bdf() {
+	FP="/root/klec/cgi/"
+	run ./mkfn_bdf $FP/ter-u16n.bdf ../ar.tf
+	run ./mkfn_bdf $FP/ter-u16v.bdf ../ai.tf
+	run ./mkfn_bdf $FP/ter-u16b.bdf ../ab.tf
+}
+
 if [ "$#" -gt 0 ]; then
 	"$@"
 else
