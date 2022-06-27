@@ -665,6 +665,7 @@ char *term_yank(const char *inbuf)
 	j = strlen(inbuf);
 	char *parts = malloc(pad_rows() * pad_cols() * 5);
 	char *ps = parts;
+	char *_ps;
 	char *part = strstr(buf, inbuf);
 	if (!j)
 		goto empty_str;
@@ -672,11 +673,13 @@ char *term_yank(const char *inbuf)
 		s = strchr(part + j, ' ');
 		if (!s)
 			s = strchr(part + j, '\n');
-		part[s - part] = '\0';
-		if (!strstr(parts, part)) {
-			memcpy(ps, part, s - part);
-			ps += s - part;
-			*ps++ = '\n';
+		_ps = ps;
+		memcpy(ps, part, s - part);
+		ps += s - part;
+		*ps++ = '\n';
+		*ps = '\0';
+		if (strstr(parts, _ps) != _ps) {
+			ps = _ps;
 			*ps = '\0';
 		}
 		part = strstr(part + (s - part) + 1, inbuf);
@@ -688,7 +691,6 @@ char *term_yank(const char *inbuf)
 	j = strlen(parts);
 	for (; col + i < pad_cols(); i++)
 		pad_put(i > j ? ' ' : parts[i], row, col+i, FGCOLOR, COLOR3);
-
 	if (ps != parts)
 		return parts;
 	free(parts);

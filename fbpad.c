@@ -412,8 +412,8 @@ static void directkey(void)
 		bufchk()
 		if (c == 13)
 			goto endyank;
-		else if (c == 127 && input_len)
-			input_len--;
+		else if (c == 127)
+			input_len = input_len ? input_len - 1 : 0;
 		else if (c == CTRLKEY('u'))
 			input_len = 0;
 		else if (c == CTRLKEY('n')) {
@@ -426,6 +426,7 @@ static void directkey(void)
 		} else
 			input_buf[input_len++] = c;
 		input_buf[input_len] = '\0';
+		free(yank_buf);
 		yank_buf = term_yank(input_buf);
 		return;
 	}
