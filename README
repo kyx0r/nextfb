@@ -37,14 +37,14 @@ i		decrease font size by 1
 u		increase font size by 1
 n		select next font, italic, bold or normal
 ==============	=======================================
-m-x		enter yank mode or reset yank buffer
-m-v		paste yank buffer left to right
-m-b		paste yank buffer right to left
+m-v		paste yank buffer
 m-y		enter yank mode where: (again to exit)
-j		move down a row
-k		move up a row
-h		select char left
-l		select char right
+any 		start typing strings, autocomplete based on
+		text displayed on the focused terminal
+enter		copies first suggestion to yank buffer
+backspace	delete 1 char from input
+^n		completes the input till first suggestion
+^u		delete all input
 ==============	=======================================
 
 To execute only a single program in fbpad, the program and its

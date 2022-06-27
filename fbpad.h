@@ -79,7 +79,7 @@ void spawn(char **args);
 void term_exec(char **args);
 void term_end(void);
 void term_screenshot(void);
-int term_yank(int c);
+char *term_yank(const char *inbuf);
 void term_scrl(int pos);
 void term_redraw(int all);
 

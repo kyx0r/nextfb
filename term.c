@@ -648,23 +648,51 @@ static void move_cursor(int r, int c)
 	mode = BIT_SET(mode, MODE_WRAPREADY, 0);
 }
 
-int term_yank(int c)
+char *term_yank(const char *inbuf)
 {
-	static int sel;
-	if (c == 'h' || c == 'l')
-		move_cursor(row, col + (c == 'l' ? 1 : -1));
-	else if (c == 'j' || c == 'k')
-		move_cursor(row + (c == 'j' ? 1 : -1), col);
-	if (sel != c) {
-		_draw_row(row);
-		draw_cursor(1);
+	char buf[pad_rows() * pad_cols() * 5];
+	char *s = buf;
+	int i, j, hpos = term->hpos;
+	for (i = 0; i < pad_rows(); i++) {
+		int off = (i - hpos) * pad_cols();
+		int *_scr = i < hpos ? HISTROW(hpos - i) : term->screen + off;
+		for (j = 0; j < pad_cols(); j++)
+			if (~_scr[j] & DWCHAR)
+				s += writeutf8(s, _scr[j]);
+		*s++ = '\n';
 	}
-	sel = c;
-	if (c == 'h')
-		pad_put(screen[OFFSET(row, col+1)], row, col+1, FGCOLOR, COLOR3);
-	else if (c == 'l')
-		pad_put(screen[OFFSET(row, col-1)], row, col-1, FGCOLOR, COLOR3);
-	return screen[OFFSET(row, col)];
+	*s = '\0';
+	j = strlen(inbuf);
+	char *parts = malloc(pad_rows() * pad_cols() * 5);
+	char *ps = parts;
+	char *part = strstr(buf, inbuf);
+	if (!j)
+		goto empty_str;
+	while (part) {
+		s = strchr(part + j, ' ');
+		if (!s)
+			s = strchr(part + j, '\n');
+		part[s - part] = '\0';
+		if (!strstr(parts, part)) {
+			memcpy(ps, part, s - part);
+			ps += s - part;
+			*ps++ = '\n';
+			*ps = '\0';
+		}
+		part = strstr(part + (s - part) + 1, inbuf);
+	}
+	empty_str:
+	for (i = 0; col + i < pad_cols(); i++)
+		pad_put(i > j ? ' ' : inbuf[i], row, col+i, FGCOLOR, COLOR4);
+	i = j;
+	j = strlen(parts);
+	for (; col + i < pad_cols(); i++)
+		pad_put(i > j ? ' ' : parts[i], row, col+i, FGCOLOR, COLOR3);
+
+	if (ps != parts)
+		return parts;
+	free(parts);
+	return NULL;
 }
 
 static void set_region(int t, int b)

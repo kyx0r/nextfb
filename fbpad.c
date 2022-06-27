@@ -260,9 +260,11 @@ static void directkey(void)
 {
 	static int tfsz;
 	static int yank;
+	static char *input_buf;
 	static char *yank_buf;
-	static int yank_len;
-	static int yank_sz;
+	static int input_len;
+	static int input_sz;
+	char *s;
 	int c = readchar();
 	if (*PASS && locked) {
 		if (c == '\r') {
@@ -291,31 +293,16 @@ static void directkey(void)
 			tfsz = !tfsz;
 			return;
 		case 'v':
-			for (c = 0; c < yank_len; c++)
-				term_send(yank_buf[c]);
+			s = yank_buf;
+			while (s && *s != '\n')
+				term_send(*s++);
 			return;
-		case 'b':
-			for (c = yank_len - 1; c >= 0; c--)
-				term_send(yank_buf[c]);
-			return;
-		case 'x':
-			yank_len = 0;
-			if (yank)
-				goto yankit;
 		case 'y':
+			endyank:
 			yank = !yank;
-			if (yank)
-				misc_save(&terms[cterm()]->cur);
-			else {	/* restore old cursor pos */
-				misc_load(&terms[cterm()]->cur);
-				term_yank(0);
-				return;
-			}
-			if (!yank_buf) {
-				yank_sz = 128;
-				yank_buf = malloc(yank_sz);
-			}
-			goto yankit;
+			input_len = 0;
+			input_sz = 0;
+			return;
 		case 'j':
 		case 'k':
 			t_set(aterm(cterm()));
@@ -416,12 +403,30 @@ static void directkey(void)
 		term_send('');
 		return;
 	} else if (yank) {
-		yankit:
-		if (yank_len + 1 == yank_sz) {
-			yank_sz *= 2;
-			yank_buf = realloc(yank_buf, yank_sz);
-		}
-		yank_buf[yank_len++] = term_yank(c);
+		#define bufchk() \
+		if (input_len + 1 >= input_sz) { \
+			input_sz += 128; \
+			input_buf = realloc(input_buf, input_sz); \
+		} \
+
+		bufchk()
+		if (c == 13)
+			goto endyank;
+		else if (c == 127 && input_len)
+			input_len--;
+		else if (c == CTRLKEY('u'))
+			input_len = 0;
+		else if (c == CTRLKEY('n')) {
+			input_len = 0;
+			s = yank_buf;
+			while (s && *s != '\n') {
+				bufchk()
+				input_buf[input_len++] = *s++;
+			}
+		} else
+			input_buf[input_len++] = c;
+		input_buf[input_len] = '\0';
+		yank_buf = term_yank(input_buf);
 		return;
 	}
 	if (c != -1 && tmain())
