@@ -704,7 +704,7 @@ char *term_yank(const char *inbuf)
 		part = strstr(part + (s - part) + 1, inbuf);
 	}
 	qsort(arrs, scnt, sizeof(char*), cmpstr);
-	_ps = malloc(ps - parts);
+	_ps = malloc(ps - parts + 1);
 	for (j = 0, i = 0; i < scnt; i++) {
 		int b = dstrlen(arrs[i], '\n') + 1;
 		memcpy(_ps+j, arrs[i], b);
@@ -713,7 +713,7 @@ char *term_yank(const char *inbuf)
 			_ps[j - 1] = '\n';
 
 	}
-	_ps[_ps[j - 1] == '\n' ? j - 1 : j] = '\0';
+	_ps[j] = '\0';
 	free(parts);
 	parts = _ps;
 	empty_str:
@@ -722,7 +722,7 @@ char *term_yank(const char *inbuf)
 	i = ilen;
 	j = strlen(parts);
 	for (; col + i < pad_cols(); i++)
-		pad_put(i > ilen ? ' ' : parts[i], row, col+i, FGCOLOR, COLOR3);
+		pad_put(i > j ? ' ' : parts[i], row, col+i, FGCOLOR, COLOR3);
 	if (j)
 		return parts;
 	free(parts);
