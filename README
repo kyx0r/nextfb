@@ -38,10 +38,12 @@ u		increase font size by 1
 n		select next font, italic, bold or normal
 ==============	=======================================
 m-v		paste yank buffer
+m-b		paste yank buffer and exit yank mode
 m-y		enter yank mode where: (again to exit)
 any 		start typing strings, autocomplete based on
 		text displayed on the focused terminal
-enter		copies first suggestion to yank buffer
+enter		copies first suggestion to yank buffer and
+		exits yank mode
 backspace	delete 1 char from input
 ^n		completes the input till first suggestion
 ^u		delete all input

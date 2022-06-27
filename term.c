@@ -648,6 +648,20 @@ static void move_cursor(int r, int c)
 	mode = BIT_SET(mode, MODE_WRAPREADY, 0);
 }
 
+int dstrlen(const char *s, char delim)
+{
+	register const char* i;
+	for(i=s; *i && *i != delim; ++i);
+	return (i-s);
+}
+
+static int cmpstr(const void *a, const void *b)
+{
+	size_t fa = dstrlen(*(const char **)a, '\n');
+	size_t fb = dstrlen(*(const char **)b, '\n');
+	return (fa > fb) - (fa < fb);
+}
+
 char *term_yank(const char *inbuf)
 {
 	char buf[pad_rows() * pad_cols() * 5];
@@ -662,17 +676,21 @@ char *term_yank(const char *inbuf)
 		*s++ = '\n';
 	}
 	*s = '\0';
-	j = strlen(inbuf);
+	int ilen = strlen(inbuf);
 	char *parts = malloc(pad_rows() * pad_cols() * 5);
 	char *ps = parts;
 	char *_ps;
 	char *part = strstr(buf, inbuf);
-	if (!j)
+	int scnt = 0;
+	char *arrs[pad_cols()];
+	if (!ilen) {
+		*ps = '\0';
 		goto empty_str;
+	}
 	while (part) {
-		s = strchr(part + j, ' ');
+		s = strchr(part + ilen, ' ');
 		if (!s)
-			s = strchr(part + j, '\n');
+			s = strchr(part + ilen, '\n');
 		_ps = ps;
 		memcpy(ps, part, s - part);
 		ps += s - part;
@@ -681,17 +699,31 @@ char *term_yank(const char *inbuf)
 		if (strstr(parts, _ps) != _ps) {
 			ps = _ps;
 			*ps = '\0';
-		}
+		} else
+			arrs[scnt++] = _ps;
 		part = strstr(part + (s - part) + 1, inbuf);
 	}
+	qsort(arrs, scnt, sizeof(char*), cmpstr);
+	_ps = malloc(ps - parts);
+	for (j = 0, i = 0; i < scnt; i++) {
+		int b = dstrlen(arrs[i], '\n') + 1;
+		memcpy(_ps+j, arrs[i], b);
+		j += b;
+		if (_ps[j - 1] == '\0')
+			_ps[j - 1] = '\n';
+
+	}
+	_ps[_ps[j - 1] == '\n' ? j - 1 : j] = '\0';
+	free(parts);
+	parts = _ps;
 	empty_str:
 	for (i = 0; col + i < pad_cols(); i++)
-		pad_put(i > j ? ' ' : inbuf[i], row, col+i, FGCOLOR, COLOR4);
-	i = j;
+		pad_put(i > ilen ? ' ' : inbuf[i], row, col+i, FGCOLOR, COLOR4);
+	i = ilen;
 	j = strlen(parts);
 	for (; col + i < pad_cols(); i++)
-		pad_put(i > j ? ' ' : parts[i], row, col+i, FGCOLOR, COLOR3);
-	if (ps != parts)
+		pad_put(i > ilen ? ' ' : parts[i], row, col+i, FGCOLOR, COLOR3);
+	if (j)
 		return parts;
 	free(parts);
 	return NULL;

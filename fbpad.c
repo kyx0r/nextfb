@@ -292,16 +292,19 @@ static void directkey(void)
 		case 't':
 			tfsz = !tfsz;
 			return;
+		case 'b':
 		case 'v':
 			s = yank_buf;
 			while (s && *s != '\n')
 				term_send(*s++);
-			return;
+			if (c == 'v')
+				return;
 		case 'y':
 			endyank:
 			yank = !yank;
 			input_len = 0;
 			input_sz = 0;
+			term_redraw(1);
 			return;
 		case 'j':
 		case 'k':
