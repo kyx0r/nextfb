@@ -375,18 +375,6 @@ static void envset(char **d, char *env)
 	d[i] = env;
 }
 
-void spawn(char **arg)
-{
-	pid_t pid;
-	if ((pid = fork()) == -1) {
-		return;
-	} else if (pid == 0) {
-		execvp(arg[0], arg);
-		return;
-	}
-	waitpid(pid, NULL, 0);
-}
-
 extern char **environ;
 void term_exec(char **args)
 {

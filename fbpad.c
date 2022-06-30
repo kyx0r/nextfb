@@ -258,7 +258,6 @@ static void listtags(void)
 
 static void directkey(void)
 {
-	static int tfsz;
 	static int yank;
 	static char *input_buf;
 	static char *yank_buf;
@@ -289,8 +288,25 @@ static void directkey(void)
 		case 'e':
 			t_exec((char*[])EDITOR);
 			return;
-		case 't':
-			tfsz = !tfsz;
+		case 't':;
+			int i = cterm();
+			if (terms[i]->ps != ipstate)
+				pad_free(terms[i]->ps);
+			if (!pad_init()) {
+				exitit = 1;
+				return;
+			}
+			pad_pset(pstate);
+			int pid = terms[i]->pid;
+			int fd = terms[i]->fd;
+			term_free(terms[i]);
+			terms[i] = term_make();
+			terms[i]->pid = pid;
+			terms[i]->fd = fd;
+			misc_save(&terms[i]->cur);
+			term_load(terms[i], 1);
+			term_redraw(1);
+			term_send('');
 			return;
 		case 'b':
 		case 'v':
@@ -356,55 +372,6 @@ static void directkey(void)
 			if (tmain())
 				term_send(ESC);
 		}
-	} else if (tfsz) {
-		char *tf1[] = TFGENFR;
-		char *tf2[] = TFGENFI;
-		char *tf3[] = TFGENFB;
-		char **tfgen = tfsz == 1 ? tf1 : tfsz == 2 ? tf2 : tf3;
-		char height[] = "-h    ";
-		char width[] = "-w     ";
-		char size[] = "               ";
-		static int tfh, tfw, tfs;
-		if (c == 'j' || c == 'k') {
-			c == 'k' ? --tfh : ++tfh;
-		} else if (c == 'h' || c == 'l') {
-			c == 'l' ? --tfw : ++tfw;
-		} else if (c == 'u' || c == 'i') {
-			c == 'i' ? --tfs : ++tfs;
-		} else if (c == 'n') {
-			tfsz = tfsz > 3 ? 1 : tfsz+1;
-			return;
-		} else
-			return;
-		tfh = tfh <= 1 ? pad_crows() : tfh;
-		tfw = tfw <= 1 ? pad_ccols() : tfw;
-		tfs = tfs <= 1 ? atoi(tfgen[6]) : tfs;
-		itoa(tfh, height+2);
-		itoa(tfw, width+2);
-		strcpy(itoa(tfs, size), tfgen[6]+2);
-		tfgen[1] = height;
-		tfgen[2] = width;
-		tfgen[6] = size;
-		spawn(tfgen);
-		int i = cterm();
-		if (terms[i]->ps != ipstate)
-			pad_free(terms[i]->ps);
-		if (!pad_init()) {
-			exitit = 1;
-			return;
-		}
-		pad_pset(pstate);
-		int pid = terms[i]->pid;
-		int fd = terms[i]->fd;
-		term_free(terms[i]);
-		terms[i] = term_make();
-		terms[i]->pid = pid;
-		terms[i]->fd = fd;
-		misc_save(&terms[i]->cur);
-		term_load(terms[i], 1);
-		term_redraw(1);
-		term_send('');
-		return;
 	} else if (yank) {
 		#define bufchk() \
 		if (input_len + 1 >= input_sz) { \

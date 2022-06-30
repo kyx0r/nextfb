@@ -28,14 +28,7 @@ m-.		scroll down
 m-=		split tag horizontally/vertically
 m--		unsplit tag
 ==============	=======================================
-m-t		enter font adjustment mode where: (again to exit)
-h		decrease font width by 1
-l		increase font width by 1
-k		decrease font height by 1
-j		increase font height by 1
-i		decrease font size by 1
-u		increase font size by 1
-n		select next font, italic, bold or normal
+m-t		reaload the font for the focused terminal
 ==============	=======================================
 m-v		paste yank buffer
 m-b		paste yank buffer and exit yank mode

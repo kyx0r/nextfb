@@ -15,9 +15,6 @@
 #define SHELL		{"sh", NULL}
 #define EDITOR		{"vi", NULL}
 #define MAIL		{"mailx", "-f", "+inbox", NULL}
-#define TFGENFR		{"mkfn", "-h18", "-w9", "-o", FR, "/root/klec/cgi/terminus-ttf-4.47.0/TerminusTTF-4.47.0.ttf", "18h96v96", NULL}
-#define TFGENFI		{"mkfn", "-h18", "-w9", "-o", FI, "/root/klec/cgi/terminus-ttf-4.47.0/TerminusTTF-Italic-4.47.0.ttf", "18h96v96", NULL}
-#define TFGENFB		{"mkfn", "-h18", "-w9", "-o", FB, "/root/klec/cgi/terminus-ttf-4.47.0/TerminusTTF-Bold-4.47.0.ttf", "18h96v96", NULL}
 
 /* TERM variable for launched programs */
 #define TERM		"linux"
