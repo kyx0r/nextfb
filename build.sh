@@ -18,13 +18,13 @@ run() {
 }
 
 install() {
-	[ -x fbpad ] || build
+	[ -x fb ] || build
 	run mkdir -p "$DESTDIR$PREFIX/bin/"
-	run cp -f fbpad "$DESTDIR$PREFIX/bin/fbpad"
+	run cp -f fb "$DESTDIR$PREFIX/bin/fb"
 }
 
 build() {
-	run "$CC" "fbpad.c" -DPWD=\"$(pwd)\" $CFLAGS -o fbpad
+	run "$CC" "fb.c" -DPWD=\"$(pwd)\" $CFLAGS -o fb
 }
 
 if [ "$#" -gt 0 ]; then
