@@ -119,8 +119,8 @@ int main(int argc, char *argv[])
 	rewind(fp);
 	for (n = 0; n < md.n; n++) {
 		int code;
-		unsigned char byte;
-		char hex[3] = {0};
+		unsigned long int byte;
+		char hex[sizeof(byte)+2] = {0};
 		get_val(fp, "ENCODING");
 		sscanf(sval, "%d", &code);
 		get_val(fp, "BBX");
@@ -128,11 +128,18 @@ int main(int argc, char *argv[])
 		get_val(fp, "BITMAP");
 		memset(canvas, 0, md.h * md.w);
 		for (i = 0; i < gh; i++) {
-			fread(hex, 1, 2, fp);
-			byte = (unsigned char) strtol(hex, NULL, 16);
-			for (x = 0, j = gw-1; j >= 0; j--, x++)
+			char *hp = hex;
+			while (hp < hex+sizeof(hex)) {
+				fread(hp, 1, 1, fp);
+				if (*hp == '\n') {
+					*hp = '\0';
+					break;
+				} else
+					hp++;
+			}
+			byte = (unsigned long int) strtol(hex, NULL, 16);
+			for (x = gw-8, j = gw-1; j >= 0; j--, x++)
 				canvas[i * md.w + j] = (byte >> x) & 1 ? 0xff : 0;
-			fseek(fp, 1, SEEK_CUR); /* skip newline */
 		}
 		write(fd, canvas, md.h * md.w);
 	}

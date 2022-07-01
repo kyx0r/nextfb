@@ -42,10 +42,14 @@ mkfn() {
 }
 
 mkfn_bdf() {
-	FP="/root/klec/cgi/"
-	run ./mkfn_bdf $FP/ter-u16n.bdf ../ar.tf
-	run ./mkfn_bdf $FP/ter-u16v.bdf ../ai.tf
-	run ./mkfn_bdf $FP/ter-u16b.bdf ../ab.tf
+	FP="/root/klec/cgi"
+	SZ="16"
+	if [ "$1" ]; then
+		SZ=$1		
+	fi
+	run ./mkfn_bdf $FP/ter-u"$SZ"n.bdf ../ar.tf
+	run ./mkfn_bdf $FP/ter-u"$SZ"v.bdf ../ai.tf
+	run ./mkfn_bdf $FP/ter-u"$SZ"b.bdf ../ab.tf
 }
 
 if [ "$#" -gt 0 ]; then

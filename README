@@ -1,9 +1,9 @@
 NEXTFB
 =====
 
-Fbpad is a small linux framebuffer virtual terminal.  It manages many
+Nextfb is a small linux framebuffer virtual terminal.  It manages many
 terminals through single-letter tags; each tag can hold two terminals.
-The following table indicates fbpad's key-bindings (m-k means pressing
+The following table indicates Nextfb's key-bindings (m-k means pressing
 k, while holding the alt key).
 
 ==============	=======================================
@@ -22,7 +22,7 @@ m-s		create a text screenshot (SCRSHOT)
 m-l		redraw the terminal
 c-m-l		lock the screen; use PASS to unlock
 c-m-o		disable/enable tag switching
-m-q		quit fbpad
+m-q		quit Nextfb
 m-,		scroll up
 m-.		scroll down
 m-=		split tag horizontally/vertically
@@ -42,14 +42,14 @@ backspace	delete 1 char from input
 ^u		delete all input
 ==============	=======================================
 
-To execute only a single program in fbpad, the program and its
-arguments should be passed as command line arguments of fbpad.  Fbpad
+To execute only a single program in Nextfb, the program and its
+arguments should be passed as command line arguments of Nextfb. Nextfb
 executes the specified program in a terminal, disables all terminal
 switching commands, and exits as soon as the program finishes.
 
 Programs like fbpdf, fbvnc, and fbff read the FBDEV environment
 variable, which can specify the framebuffer device and its drawing
-region, like "/dev/fb0:1438x448+1+451".  Fbpad defines this
+region, like "/dev/fb0:1438x448+1+451".  Nextfb defines this
 environment variable when executing a program, so that if a tag is
 split, the program running in its terminal is limited to its
 corresponding framebuffer region.
@@ -57,25 +57,25 @@ corresponding framebuffer region.
 SETTING UP
 ==========
 
-To configure fbpad, you should edit conf.h.  To get fbpad running you
-need to make sure FR points to a valid fbpad font (for testing you can
+To configure Nextfb, you should edit conf.h.  To get Nextfb running you
+need to make sure FR points to a valid Nextfb font (for testing you can
 try http://litcave.rudi.ir/courr.tf) and SHELL to the shell you want
-fbpad to execute.  Once these are set, you should be able to start
-fbpad without problems.
+Nextfb to execute.  Once these are set, you should be able to start
+Nextfb without problems.
 
-Fbpad fonts can be generated using fbpad_mkfn program
+Nextfb fonts can be generated using fbpad_mkfn program
 (http://litcave.rudi.ir/).  The FR, FI, and FB macros specify the path
-of fbpad fonts for regular, italic, and bold fonts.  If FI or FB is
+of Nextfb fonts for regular, italic, and bold fonts.  If FI or FB is
 NULL, the regular font is used for italic or bold text.
 
-Next, you may want to change the list of fbpad tags by changing TAGS.
+Next, you may want to change the list of Nextfb tags by changing TAGS.
 FGCOLOR and BGCOLOR macros specify foreground and background colors,
 for instance the FGCOLOR of 2 and BGCOLOR of 0 creates green on black
 terminals.  Individual colors can be customized by editing the hex RGB
 color description of COLOR* macros.  Also SCRSHOT macro specifies where
-fbpad text screenshots, created by "m-s" command, must be saved.
+Nextfb text screenshots, created by "m-s" command, must be saved.
 
-If you want to use fbpad's scrsnap feature, you can edit TAGS_SAVED to
+If you want to use Nextfb's scrsnap feature, you can edit TAGS_SAVED to
 change the list of saved terminals.  Framebuffer memory is saved and
 reloaded for these tags, which is very convenient when you are using
 programs that change the framebuffer simultaneously, like fbpdf.
@@ -84,12 +84,12 @@ programs that change the framebuffer simultaneously, like fbpdf.
 256-COLOR MODE
 ==============
 
-Fbpad supports xterm's 256-color extension, but most programs will not
+Nextfb supports xterm's 256-color extension, but most programs will not
 use this extension, unless the $TERM terminfo entry declares this
-feature.  For this purpose, fbpad-256 terminfo file can be created to
+feature.  For this purpose, Nextfb-256 terminfo file can be created to
 contain (the two-space identation should be ignored):
 
-  fbpad-256,
+  Nextfb-256,
   	use=linux, U8#0,
   	colors#256,
   	pairs#32767,
@@ -98,14 +98,14 @@ contain (the two-space identation should be ignored):
 
 Which can be installed with tic command:
 
-  $ tic -x ./fbpad-256
+  $ tic -x ./Nextfb-256
 
 The following line should be added to shell's startup script:
 
-  export TERM=fbpad-256
+  export TERM=Nextfb-256
 
 Note that in order to use this feature and italic fonts in Vim, adding
-fbpad-256 terminfo is not necessary.  Including the following lines in
+Nextfb-256 terminfo is not necessary.  Including the following lines in
 the vimrc file should enable them:
 
   set t_ZH=[3m
