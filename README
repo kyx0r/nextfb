@@ -28,7 +28,7 @@ m-.		scroll down
 m-=		split tag horizontally/vertically
 m--		unsplit tag
 ==============	=======================================
-m-t		reaload the font for the focused terminal
+m-t		reload the font for the focused terminal
 ==============	=======================================
 m-v		paste yank buffer
 m-b		paste yank buffer and exit yank mode
