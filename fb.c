@@ -31,7 +31,7 @@
 #include <linux/vt.h>
 #include <linux/fb.h>
 #include <sys/mman.h>
-#include "fbpad.h"
+#include "fb.h"
 #include "conf.h"
 #include "font.c"
 #include "term.c"
@@ -60,32 +60,6 @@ static int taglock;			/* disable tag switching */
 static char pass[1024];
 static unsigned int passlen;
 static int cmdmode;			/* execute a command and exit */
-
-static void reverse_in_place(char *str, int len)
-{
-	char *p1 = str;
-	char *p2 = str + len - 1;
-	while (p1 < p2) {
-		char tmp = *p1;
-		*p1++ = *p2;
-		*p2-- = tmp;
-	}
-}
-
-char *itoa(int n, char s[])
-{
-	int i = 0, sign;
-	if ((sign = n) < 0)		/* record sign */
-		n = -n;			/* make n positive */
-	do {				/* generate digits in reverse order */
-		s[i++] = n % 10 + '0';	/* get next digit */
-	} while ((n /= 10) > 0);	/* delete it */
-	if (sign < 0)
-		s[i++] = '-';
-	s[i] = '\0';
-	reverse_in_place(s, i);
-	return &s[i];
-}
 
 static int readchar(void)
 {
@@ -118,7 +92,7 @@ static int nterm(void)
 {
 	int n = (cterm() + 1) % NTERMS;
 	while (n != cterm()) {
-		if (terms[n]->fd)
+		if (terms[n] && terms[n]->fd)
 			break;
 		n = (n + 1) % NTERMS;
 	}
@@ -177,6 +151,11 @@ static int t_hideshow(int oidx, int save, int nidx, int show)
 	int otag = oidx % NTAGS;
 	int ntag = nidx % NTAGS;
 	int ret;
+	if (!terms[nidx]) {
+		pad_pset(ipstate);
+		pad_conf(0, 0, fb_rows(), fb_cols());
+		terms[nidx] = term_make();
+	}
 	t_hide(oidx, save);
 	if (show && split[otag] && otag == ntag)
 		pad_border(0, BRWID);
@@ -190,7 +169,8 @@ static int t_hideshow(int oidx, int save, int nidx, int show)
 /* set cterm() */
 static void t_set(int n)
 {
-	if (cterm() == n || cmdmode)
+	int i = cterm();
+	if (i == n || cmdmode)
 		return;
 	if (taglock && ctag != n % NTAGS)
 		return;
@@ -198,15 +178,21 @@ static void t_set(int n)
 		ltag = ctag;
 	if (ctag == n % NTAGS) {
 		if (split[n % NTAGS])
-			t_hideshow(cterm(), 0, n, 1);
+			t_hideshow(i, 0, n, 1);
 		else
-			t_hideshow(cterm(), 1, n, 2);
+			t_hideshow(i, 1, n, 2);
 	} else {
-		int draw = t_hideshow(cterm(), 1, n, 2);
+		int draw = t_hideshow(i, 1, n, 2);
 		if (split[n % NTAGS]) {
 			t_hideshow(n, 0, aterm(n), draw == 2 ? 1 : 2);
 			t_hideshow(aterm(n), 0, n, 1);
 		}
+	}
+	if (!terms[i]->fd) {
+		if (terms[i]->ps != ipstate)
+			pad_free(terms[i]->ps);
+		term_free(terms[i]);
+		terms[i] = NULL;
 	}
 	ctag = n % NTAGS;
 	tops[ctag] = n / NTAGS;
@@ -241,9 +227,9 @@ static void listtags(void)
 	pad_put(' ', r, c++, fg | FN_B, bg);
 	for (i = 0; i < NTAGS && c + 2 < pad_cols(); i++) {
 		int nt = 0;
-		if (terms[i]->fd)
+		if (terms[i] && terms[i]->fd)
 			nt++;
-		if (terms[aterm(i)]->fd)
+		if (terms[aterm(i)] && terms[aterm(i)]->fd)
 			nt++;
 		pad_put(i == ctag ? '(' : ' ', r, c++, fg, bg);
 		if (TERMSNAP(i))
@@ -426,7 +412,7 @@ static int pollterms(void)
 	ufds[0].fd = 0;
 	ufds[0].events = POLLIN;
 	for (i = 0; i < NTERMS; i++) {
-		if (terms[i]->fd) {
+		if (terms[i] && terms[i]->fd) {
 			ufds[n].fd = terms[i]->fd;
 			ufds[n].events = POLLIN;
 			term_idx[n++] = i;
@@ -532,8 +518,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "fbpad: cannot find fonts\n");
 		return 1;
 	}
-	for (i = 0; i < NTERMS; i++)
-		terms[i] = term_make();
+	terms[0] = term_make();
 	write(1, hide, strlen(hide));
 	signalsetup();
 	fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);

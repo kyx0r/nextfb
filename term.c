@@ -250,6 +250,8 @@ struct term *term_make(void)
 
 void term_free(struct term *term)
 {
+	if (!term)
+		return;
 	free(term->screen);
 	free(term->hist);
 	free(term->fgs);
