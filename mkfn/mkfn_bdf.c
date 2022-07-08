@@ -138,8 +138,11 @@ int main(int argc, char *argv[])
 					hp++;
 			}
 			byte = (unsigned long int) strtol(hex, NULL, 16);
-			for (x = gw-8, j = gw-1; j >= 0; j--, x++)
+			for (x = gw-8 < 0 ? 0 : gw-8, j = gw-1; j >= 0; j--, x++) {
+				if (i*md.w+j > md.h * md.w)
+					continue;
 				canvas[i * md.w + j] = (byte >> x) & 1 ? 0xff : 0;
+			}
 		}
 		write(fd, canvas, md.h * md.w);
 	}

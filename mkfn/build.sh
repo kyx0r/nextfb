@@ -41,7 +41,7 @@ mkfn() {
 	run ./mkfn $OP -o ../ab.tf $FP/TerminusTTF-Bold-4.47.0.ttf $SZ
 }
 
-mkfn_bdf() {
+mkfnbdf() {
 	FP="/root/klec/cgi"
 	SZ="16"
 	if [ "$1" ]; then

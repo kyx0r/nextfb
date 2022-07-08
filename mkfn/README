@@ -2,7 +2,7 @@ MKFN
 ==========
 
 This program generates nextfb font files out of ttf outlines.
-It uses stb_truetype.h. Build using ./build.sh mkfn
+It uses stb_truetype.h. Generate .tf fonts using ./build.sh mkfn
 
 To control which glyphs to include in the generated font, especially
 to reduce the size of the files, edit chars.h.  The build.sh script
@@ -15,7 +15,7 @@ the resulting nextfb font.  The size and horizontal/vertical DPI of
 each font may be specified after each font path as (without the
 brackets):
 
-  font.ttf:[SZ][hHDPI][vVDPI][rVADJ][cHADJ][bBOLD][aHINT]
+  font.ttf [SZ][hHDPI][vVDPI][rVADJ][cHADJ][bBOLD][aHINT]
 
 in which SZ is the font size, HDPI/VDPI is the horizontal/vertical
 DPI, HADJ/VADJ is the amount of horizontal/vertical position
@@ -29,11 +29,11 @@ MKFN_BDF
 ==========
 
 This program generates nextfb font files out of .bdf bitmaps.
-Build using ./build.sh mkfn
+Generate .tf fonts using ./build.sh mkfnbdf
 
 Bitmaps are fixed in size so there are no parameters to this
 program except input and output file in format:
-mkfn_bdf in out
+$ mkfn_bdf in out
 
 It's not possible to combine them with .ttf however you can
 add extra glyphs to the .bdf files by hand provided that
