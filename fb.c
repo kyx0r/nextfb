@@ -425,17 +425,11 @@ static int pollterms(void)
 	if (ufds[0].revents & POLLIN)
 		directkey();
 	for (i = 1; i < n; i++) {
-		if (!(ufds[i].revents & POLLFLAGS))
+		if (ufds[i].revents & (POLLFLAGS & ~POLLIN))
 			continue;
 		peepterm(term_idx[i]);
-		if (ufds[i].revents & POLLIN) {
+		if (ufds[i].revents & POLLIN)
 			term_read();
-		} else {
-			scr_free(term_idx[i]);
-			term_end();
-			if (cmdmode)
-				exitit = 1;
-		}
 		peepback(term_idx[i]);
 	}
 	return 0;
@@ -484,8 +478,11 @@ static void signalreceived(int n)
 		}
 		break;
 	case SIGCHLD:
-		while (waitpid(-1, NULL, WNOHANG) > 0)
-			;
+		while (waitpid(-1, NULL, WNOHANG) > 0);
+		term_end();
+		scr_free(cterm());
+		if (cmdmode)
+			exitit = 1;
 		break;
 	}
 }
@@ -524,8 +521,6 @@ int main(int argc, char **argv)
 	fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
 	while (args[0] && args[0][0] == '-')
 		args++;
-	int errfd = open("/dev/null", O_WRONLY);
-	dup2(errfd, 2);
 	mainloop(args[0] ? args : NULL);
 	write(1, show, strlen(show));
 	for (i = 0; i < NTERMS; i++)
@@ -533,6 +528,5 @@ int main(int argc, char **argv)
 	pad_free(ipstate);
 	scr_done();
 	fb_free();
-	close(errfd);
 	return 0;
 }
