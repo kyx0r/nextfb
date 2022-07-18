@@ -427,10 +427,11 @@ static int pollterms(void)
 	for (i = 1; i < n; i++) {
 		if (ufds[i].revents & (POLLFLAGS & ~POLLIN))
 			continue;
-		peepterm(term_idx[i]);
-		if (ufds[i].revents & POLLIN)
+		if (ufds[i].revents & POLLIN) {
+			peepterm(term_idx[i]);
 			term_read();
-		peepback(term_idx[i]);
+			peepback(term_idx[i]);
+		}
 	}
 	return 0;
 }

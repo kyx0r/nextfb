@@ -475,10 +475,8 @@ void term_redraw(int all)
 			lazy_flush();
 		else if (all)
 			term_scrl(0);
-	} else {
-		if (all)
-			pad_fill(0, -1, 0, -1, 0);
-	}
+	} else if (all)
+		pad_fill(0, -1, 0, -1, 0);
 }
 
 void term_load(struct term *t, int flags)
@@ -501,8 +499,7 @@ void term_end(void)
 		close(term->fd);
 	term_zero(term);
 	term_load(term, visible);
-	if (visible)
-		term_redraw(1);
+	term_redraw(1);
 }
 
 static int writeutf8(char *dst, int c)
