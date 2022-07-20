@@ -481,6 +481,7 @@ static void signalreceived(int n)
 	case SIGCHLD:
 		while (waitpid(-1, NULL, WNOHANG) > 0);
 		term_end();
+		terms[cterm()]->fd = 0;
 		scr_free(cterm());
 		if (cmdmode)
 			exitit = 1;
