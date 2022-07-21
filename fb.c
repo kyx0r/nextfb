@@ -528,6 +528,7 @@ int main(int argc, char **argv)
 	for (i = 0; i < NTERMS; i++)
 		term_free(terms[i]);
 	pad_free(ipstate);
+	fcntl(0, F_SETFL, fcntl(0, F_GETFL) & ~O_NONBLOCK);
 	scr_done();
 	fb_free();
 	return 0;
