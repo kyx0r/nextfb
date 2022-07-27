@@ -26,8 +26,8 @@ static int mode;
 static int visible;
 
 static unsigned int clr16[16] = {
-	COLOR0, COLOR1, COLOR2, COLOR3, COLOR4, COLOR5, COLOR6, COLOR7,
-	COLOR8, COLOR9, COLORA, COLORB, COLORC, COLORD, COLORE, COLORF,
+	BLACK0, RED1, GREEN2, YELLOW3, BLUE4, MAGENTA5, CYAN6, WHITE7,
+	BLACK8, RED9, GREEN10, YELLOW11, BLUE12, MAGENTA13, CYAN14, WHITE15,
 };
 
 static int clrmap(int c)
@@ -705,11 +705,11 @@ char *term_yank(const char *inbuf)
 	parts = _ps;
 	empty_str:
 	for (i = 0; col + i < pad_cols(); i++)
-		pad_put(i > ilen ? ' ' : inbuf[i], row, col+i, FGCOLOR, COLOR4);
+		pad_put(i > ilen ? ' ' : inbuf[i], row, col+i, FGCOLOR, BLUE4);
 	i = ilen;
 	j = strlen(parts);
 	for (; col + i < pad_cols(); i++)
-		pad_put(i > j ? ' ' : parts[i], row, col+i, FGCOLOR, COLOR3);
+		pad_put(i > j ? ' ' : parts[i], row, col+i, FGCOLOR, YELLOW3);
 	if (j)
 		return parts;
 	free(parts);
