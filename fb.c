@@ -478,11 +478,19 @@ static void signalreceived(int n)
 			t_hideshow(aterm(cterm()), 0, cterm(), 1);
 		}
 		break;
-	case SIGCHLD:
-		while (waitpid(-1, NULL, WNOHANG) > 0);
-		term_end();
-		terms[cterm()]->fd = 0;
-		scr_free(cterm());
+	case SIGCHLD:;
+		int pid, i;
+		while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
+			if (terms[cterm()]->pid == pid)
+				term_end();
+			for (i = 0; i < NTERMS; i++) {
+				if (terms[i] && terms[i]->pid == pid) {
+					terms[i]->fd = 0;
+					scr_free(i);
+					break;
+				}
+			}
+		}
 		if (cmdmode)
 			exitit = 1;
 		break;
