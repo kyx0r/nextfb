@@ -486,6 +486,7 @@ static void signalreceived(int n)
 			for (i = 0; i < NTERMS; i++) {
 				if (terms[i] && terms[i]->pid == pid) {
 					terms[i]->fd = 0;
+					terms[i]->pid = 0;
 					scr_free(i);
 					break;
 				}
