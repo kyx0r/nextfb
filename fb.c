@@ -151,12 +151,12 @@ static int t_hideshow(int oidx, int save, int nidx, int show)
 	int otag = oidx % NTAGS;
 	int ntag = nidx % NTAGS;
 	int ret;
+	t_hide(oidx, save);
 	if (!terms[nidx]) {
 		pad_pset(ipstate);
 		pad_conf(0, 0, fb_rows(), fb_cols());
 		terms[nidx] = term_make();
 	}
-	t_hide(oidx, save);
 	if (show && split[otag] && otag == ntag)
 		pad_border(0, BRWID);
 	pad_pset(terms[nidx]->ps);
