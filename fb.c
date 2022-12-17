@@ -263,6 +263,12 @@ static void directkey(void)
 			pass[passlen++] = c;
 		return;
 	}
+	#define bufchk() \
+	if (input_len + 1 >= input_sz) { \
+		input_sz += 128; \
+		input_buf = realloc(input_buf, input_sz); \
+	} \
+
 	if (c == ESC) {
 		switch ((c = readchar())) {
 		case 'c':
@@ -308,6 +314,17 @@ static void directkey(void)
 			input_sz = 0;
 			term_redraw(1);
 			return;
+		case 'u':
+		case 'n':
+			if (!yank)
+				return;
+			input_len = 0;
+			s = yank_buf;
+			while (c == 'n' && s && *s != '\n') {
+				bufchk()
+				input_buf[input_len++] = *s++;
+			}
+			goto yank_update;
 		case 'j':
 		case 'k':
 			t_set(aterm(cterm()));
@@ -359,28 +376,14 @@ static void directkey(void)
 				term_send(ESC);
 		}
 	} else if (yank) {
-		#define bufchk() \
-		if (input_len + 1 >= input_sz) { \
-			input_sz += 128; \
-			input_buf = realloc(input_buf, input_sz); \
-		} \
-
 		bufchk()
 		if (c == 13)
 			goto endyank;
 		else if (c == 127)
 			input_len = input_len ? input_len - 1 : 0;
-		else if (c == CTRLKEY('u'))
-			input_len = 0;
-		else if (c == CTRLKEY('n')) {
-			input_len = 0;
-			s = yank_buf;
-			while (s && *s != '\n') {
-				bufchk()
-				input_buf[input_len++] = *s++;
-			}
-		} else
+		else
 			input_buf[input_len++] = c;
+		yank_update:
 		input_buf[input_len] = '\0';
 		free(yank_buf);
 		yank_buf = term_yank(input_buf);

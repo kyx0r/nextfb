@@ -38,8 +38,8 @@ any 		start typing strings, autocomplete based on
 enter		copies first suggestion to yank buffer and
 		exits yank mode
 backspace	delete 1 char from input
-^n		completes the input till first suggestion
-^u		delete all input
+m-n		completes the input till first suggestion
+m-u		delete all input
 ==============	=======================================
 
 To execute only a single program in Nextfb, the program and its
