@@ -60,6 +60,7 @@ static int taglock;			/* disable tag switching */
 static char pass[1024];
 static unsigned int passlen;
 static int cmdmode;			/* execute a command and exit */
+static int tagslisted;
 
 static int readchar(void)
 {
@@ -166,6 +167,38 @@ static int t_hideshow(int oidx, int save, int nidx, int show)
 	return ret;
 }
 
+static void listtags(void)
+{
+	/* colors for tags based on their number of terminals */
+	int fg = 0x96cb5c, bg = 0x516f7b;
+	int colors[] = {0x173f4f, fg, 0x68cbc0 | FN_B};
+	int c = 0;
+	int r = pad_rows() - 1;
+	int i;
+	pad_put('T', r, c++, fg | FN_B, bg);
+	pad_put('A', r, c++, fg | FN_B, bg);
+	pad_put('G', r, c++, fg | FN_B, bg);
+	pad_put('S', r, c++, fg | FN_B, bg);
+	pad_put(':', r, c++, fg | FN_B, bg);
+	pad_put(' ', r, c++, fg | FN_B, bg);
+	for (i = 0; i < NTAGS && c + 2 < pad_cols(); i++) {
+		int nt = 0;
+		if (terms[i] && terms[i]->fd)
+			nt++;
+		if (tterm(i) == aterm(i))
+			nt++;
+		pad_put(i == ctag ? '(' : ' ', r, c++, fg, bg);
+		if (TERMSNAP(i))
+			pad_put(tags[i], r, c++, !nt ? bg : colors[nt], colors[0]);
+		else
+			pad_put(tags[i], r, c++, colors[nt], bg);
+		pad_put(i == ctag ? ')' : ' ', r, c++, fg, bg);
+	}
+	for (; c < pad_cols(); c++)
+		pad_put(' ', r, c, fg, bg);
+	tagslisted = 1;
+}
+
 /* set cterm() */
 static void t_set(int n)
 {
@@ -196,6 +229,8 @@ static void t_set(int n)
 	}
 	ctag = n % NTAGS;
 	tops[ctag] = n / NTAGS;
+	if (!terms[cterm()]->hpos)
+		listtags();
 }
 
 static void t_split(int n)
@@ -211,37 +246,6 @@ static void t_exec(char **args)
 		term_exec(args);
 }
 
-static void listtags(void)
-{
-	/* colors for tags based on their number of terminals */
-	int fg = 0x96cb5c, bg = 0x516f7b;
-	int colors[] = {0x173f4f, fg, 0x68cbc0 | FN_B};
-	int c = 0;
-	int r = pad_rows() - 1;
-	int i;
-	pad_put('T', r, c++, fg | FN_B, bg);
-	pad_put('A', r, c++, fg | FN_B, bg);
-	pad_put('G', r, c++, fg | FN_B, bg);
-	pad_put('S', r, c++, fg | FN_B, bg);
-	pad_put(':', r, c++, fg | FN_B, bg);
-	pad_put(' ', r, c++, fg | FN_B, bg);
-	for (i = 0; i < NTAGS && c + 2 < pad_cols(); i++) {
-		int nt = 0;
-		if (terms[i] && terms[i]->fd)
-			nt++;
-		if (terms[aterm(i)] && terms[aterm(i)]->fd)
-			nt++;
-		pad_put(i == ctag ? '(' : ' ', r, c++, fg, bg);
-		if (TERMSNAP(i))
-			pad_put(tags[i], r, c++, !nt ? bg : colors[nt], colors[0]);
-		else
-			pad_put(tags[i], r, c++, colors[nt], bg);
-		pad_put(i == ctag ? ')' : ' ', r, c++, fg, bg);
-	}
-	for (; c < pad_cols(); c++)
-		pad_put(' ', r, c, fg, bg);
-}
-
 static void directkey(void)
 {
 	static int yank;
@@ -251,6 +255,10 @@ static void directkey(void)
 	static int input_sz;
 	char *s;
 	int c = readchar();
+	if (tagslisted) {
+		term_redraw(1);
+		tagslisted = 0;
+	}
 	if (*PASS && locked) {
 		if (c == '\r') {
 			pass[passlen] = '\0';
