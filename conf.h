@@ -36,19 +36,19 @@
 #define BRIGHTEN	1
 
 #define BLACK0		0x000000
-#define RED1		0xaa0000
-#define GREEN2		0x00aa00
-#define YELLOW3		0xaa5500
-#define BLUE4		0x0000aa
-#define MAGENTA5	0xaa00aa
-#define CYAN6		0x00aaaa
-#define WHITE7		0xaaaaaa
+#define RED1		0xff0000
+#define GREEN2		0x33ff00
+#define YELLOW3		0xffff00
+#define BLUE4		0x0066ff
+#define MAGENTA5	0xcc00ff
+#define CYAN6		0x00ffff
+#define WHITE7		0xffffff
 /* bright colors */
-#define BLACK8		0x555555
-#define RED9		0xff5555
-#define GREEN10		0x55ff55
-#define YELLOW11	0xffff55
-#define BLUE12		0x5555ff
-#define MAGENTA13	0xff55ff
-#define CYAN14		0x55ffff
+#define BLACK8		0x808080
+#define RED9		0xff0000
+#define GREEN10		0x33ff00
+#define YELLOW11	0xffff00
+#define BLUE12		0x0066ff
+#define MAGENTA13	0xcc00ff
+#define CYAN14		0x00ffff
 #define WHITE15		0xffffff
