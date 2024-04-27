@@ -709,7 +709,7 @@ char *term_yank(const char *inbuf)
 	i = ilen;
 	j = strlen(parts);
 	for (; col + i < pad_cols(); i++)
-		pad_put(i > j ? ' ' : parts[i], row, col+i, FGCOLOR, YELLOW3);
+		pad_put(i > j ? ' ' : parts[i], row, col+i, FGCOLOR, BLACK8);
 	if (j)
 		return parts;
 	free(parts);
