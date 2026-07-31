@@ -916,6 +916,24 @@ static void ctlseq(void)
 #define ESCM(c)		(((c) & 0xf0) == 0x20)
 #define ESCF(c)		((c) > 0x30 && (c) < 0x7f)
 
+/* consume a control string (OSC/DCS/SOS/PM/APC) up to BEL or ST */
+static void strseq(void)
+{
+	int c;
+	while ((c = readpty()) >= 0) {
+		if (c == 0x07)			/* BEL */
+			break;
+		if (c == 0x9c)			/* ST (8-bit) */
+			break;
+		if (c == 0x1b) {		/* ESC \ (ST) */
+			c = readpty();
+			if (c != '\\' && ptycur > 0)
+				ptycur--;	/* not ST; reprocess */
+			break;
+		}
+	}
+}
+
 /* escape sequences */
 static void escseq(void)
 {
@@ -959,6 +977,13 @@ static void escseq(void)
 	case 'c':	/* RIS		reset */
 		term_reset();
 		break;
+	case ']':	/* OSC		operating system command */
+	case 'P':	/* DCS		device control string (ended by ST) */
+	case 'X':	/* SOS		start of string */
+	case '^':	/* PM		privacy message (ended by ST) */
+	case '_':	/* APC		application program command (ended by ST) */
+		strseq();
+		break;
 	case 'H':	/* HTS		set tab stop at current column */
 	case 'Z':	/* DECID	DEC private ID; return ESC [ ? 6 c (VT102) */
 	case '#':	/* DECALN	("#8") DEC alignment test - fill screen with E's */
@@ -966,17 +991,12 @@ static void escseq(void)
 	case '=':	/* DECPAM	set application keypad mode */
 	case 'N':	/* SS2		select G2 charset for next char only */
 	case 'O':	/* SS3		select G3 charset for next char only */
-	case 'P':	/* DCS		device control string (ended by ST) */
-	case 'X':	/* SOS		start of string */
-	case '^':	/* PM		privacy message (ended by ST) */
-	case '_':	/* APC		application program command (ended by ST) */
 	case '\\':	/* ST		string terminator */
 	case 'n':	/* LS2		invoke G2 charset */
 	case 'o':	/* LS3		invoke G3 charset */
 	case '|':	/* LS3R		invoke G3 charset as GR */
 	case '}':	/* LS2R		invoke G2 charset as GR */
 	case '~':	/* LS1R		invoke G1 charset as GR */
-	case ']':	/* OSC		operating system command */
 	case 'g':	/* BEL		alternate BEL */
 	default:
 		unknown("escseq", c);
