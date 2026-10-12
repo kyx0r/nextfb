@@ -117,8 +117,14 @@ static char *mtext(int br, int bc, int er, int ec)
 		t = br; br = er; er = t;
 		t = bc; bc = ec; ec = t;
 	}
+	/* a selection made before a resize can reach past the current grid;
+	   clamp it so the cell count cannot outrun the buffer sized below */
+	br = LIMIT(br, 0, pad_rows() - 1);
+	er = LIMIT(er, 0, pad_rows() - 1);
+	bc = LIMIT(bc, 0, pad_cols() - 1);
+	ec = LIMIT(ec, 0, pad_cols() - 1);
 	int r, c, n = pad_cols() * 5;
-	char *buf = malloc((er - br + 1) * n);
+	char *buf = malloc((er - br + 1) * n + 1);
 	char *s = buf;
 	if (!buf)
 		return NULL;
@@ -169,11 +175,9 @@ static void msel_line(int r)
    and any keystroke, and is only replaced by a new selection */
 static void mpaste(void)
 {
-	char *s = yank_buf;
-	if (!s)
-		return;
-	while (*s)
-		term_send(*s++);
+	char *s;
+	for (s = yank_buf; s && *s; s++)
+		term_send(*s);
 }
 
 static void mclick_ev(int r, int c)
@@ -198,6 +202,35 @@ static void mclick_ev(int r, int c)
 	}
 }
 
+/* what lands in the register is echoed back into the terminal when it is
+   pasted, so keep only text that could be typed: no control bytes (they
+   would inject escape sequences) and no fullwidth cell halves */
+static void yank_sanitize(char *s)
+{
+	char *r = s, *w = s;
+	while (*r) {
+		unsigned char c = *r++;
+		if (c == '\n' || c == '\t' || c >= 0x80 || isprint(c))
+			*w++ = c;
+	}
+	*w = '\0';
+}
+
+/* take ownership of s as the new yank register; an empty s after
+   sanitizing leaves the previous register alone */
+static void yank_set(char *s)
+{
+	if (!s)
+		return;
+	yank_sanitize(s);
+	if (!*s) {
+		free(s);
+		return;
+	}
+	free(yank_buf);
+	yank_buf = s;
+}
+
 /* put the selection text in the yank register immediately; drop trailing
    blanks since the selection usually reaches the end of a line */
 static void msel_yank(void)
@@ -212,12 +245,7 @@ static void msel_yank(void)
 	e = (int)strlen(s);
 	while (e && (s[e - 1] == ' ' || s[e - 1] == '\n'))
 		s[--e] = '\0';
-	if (!e) {
-		free(s);
-		return;
-	}
-	free(yank_buf);
-	yank_buf = s;
+	yank_set(s);
 }
 
 /* hand the current cursor cell and selection to the term layer; the
@@ -628,16 +656,16 @@ static void directkey(void)
 			return;
 		case 'b':
 		case 'v':
-			s = yank_buf;
-			while (s && *s != '\n')
-				term_send(*s++);
+			/* paste the first line of the register; the test on
+			   *s also covers a register cleared meanwhile */
+			for (s = yank_buf; s && *s && *s != '\n'; s++)
+				term_send(*s);
 			if (c == 'v')
 				return;
 		case 'y':
 			endyank:
 			yank = !yank;
 			input_len = 0;
-			input_sz = 0;
 			term_redraw(1);
 			return;
 		case 'u':
@@ -712,7 +740,8 @@ static void directkey(void)
 		yank_update:
 		input_buf[input_len] = '\0';
 		free(yank_buf);
-		yank_buf = term_yank(input_buf);
+		yank_buf = NULL;
+		yank_set(term_yank(input_buf));
 		return;
 	}
 	if (c != -1 && tmain())
