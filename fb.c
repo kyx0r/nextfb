@@ -79,6 +79,7 @@ static int mx, my;		/* software mouse cursor position (pixels) */
 static int mbprev;		/* previously pressed mouse buttons */
 static long long mtime;		/* time of the last button press (ms) */
 static int mlast_r, mlast_c;	/* cell of the previous click */
+static int msel_mode;		/* selection anchor: 0 cell 1 word 2 line */
 static int mclick;		/* consecutive click count on same cell */
 static int sel_on;		/* a mouse selection is active */
 static char *yank_buf;	/* yank register: mouse selections and ^Qy search */
@@ -188,6 +189,7 @@ static void mclick_ev(int r, int c)
 	mtime = now;
 	mlast_r = r;
 	mlast_c = c;
+	msel_mode = mclick >= 3 ? 2 : mclick == 2 ? 1 : 0;
 	if (mclick >= 3)
 		msel_line(r);
 	else if (mclick == 2)
@@ -294,6 +296,10 @@ static void mouse_event(int type, int code, int value)
 			t = sr; sr = er2; er2 = t;
 			t = sc; sc = ec2; ec2 = t;
 		}
+		if (!msel_mode) {	/* plain char drag: end follows pointer */
+			sel_er = r;
+			sel_ec = c;
+		} else
 		if (r < sr || (r == sr && c < sc)) {
 			sel_br = r;
 			sel_bc = c;
