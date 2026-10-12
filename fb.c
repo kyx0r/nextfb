@@ -80,6 +80,8 @@ static int mx, my;		/* software mouse cursor position (pixels) */
 static int mbprev;		/* previously pressed mouse buttons */
 static long long mtime;		/* time of the last button press (ms) */
 static int mlast_r, mlast_c;	/* cell of the previous click */
+static int mpress_r, mpress_c;	/* cell the left button went down in */
+static int mdrag;		/* the held left button left that cell */
 static int msel_mode;		/* selection anchor: 0 cell 1 word 2 line */
 static int mclick;		/* consecutive click count on same cell */
 static int sel_on;		/* a mouse selection is active */
@@ -194,8 +196,9 @@ static void mclick_ev(int r, int c)
 	else
 		mclick = 1;
 	mtime = now;
-	mlast_r = r;
-	mlast_c = c;
+	mlast_r = mpress_r = r;
+	mlast_c = mpress_c = c;
+	mdrag = 0;
 	msel_mode = mclick >= 3 ? 2 : mclick == 2 ? 1 : 0;
 	if (mclick >= 3) {
 		msel_line(r);
@@ -211,6 +214,8 @@ static void mclick_ev(int r, int c)
 		sel_on = 1;
 		msel_mode = 0;
 		mark_on = 0;
+		mclick = 0;	/* the region is complete: the next click is a
+				   fresh first click that re-anchors it */
 	} else {
 		/* the first click only parks the pending marker; it becomes a
 		   real marker in mouse_tick() once CLICK_REG ms go by with no
@@ -280,8 +285,14 @@ static void mouse_refresh(int yank)
 		t = br; br = er; er = t;
 		t = bc; bc = ec; ec = t;
 	}
-	if (mark_on || mpend) {
-		term_mouse(mark_r, mark_c, sel_on, br, bc, er, ec);
+	if ((mark_on || mpend) && !sel_on) {
+		/* the block cursor is the pointer and must keep following it;
+		   a marker is only an anchor, so it takes a cell of its own in
+		   the region slots instead of holding the cursor still on
+		   itself, which is what froze the pointer display */
+		br = er = mark_r;
+		bc = ec = mark_c;
+		term_mouse(mcell_r(), mcell_c(), 1, br, bc, er, ec);
 	} else {
 		term_mouse(mcell_r(), mcell_c(), sel_on, br, bc, er, ec);
 	}
@@ -296,6 +307,7 @@ static void mclear(void)
 	mark_on = 0;
 	mpend = 0;
 	mclick = 0;
+	mdrag = 0;
 	msel_mode = 0;
 	sel_on = 0;
 	term_mouse(-1, 0, 0, 0, 0, 0, 0);
@@ -325,11 +337,11 @@ static void mouse_tick(void)
 static void mouse_event(int type, int code, int value)
 {
 	int r = mcell_r(), c = mcell_c();
-	int orow = mrow, ocol = mcol, dirty = 0, selup = 0;
+	int orow = mrow, ocol = mcol, dirty = 0, selup = 0, motion = 0;
 	switch (type) {
 	case EV_REL:
 		if (code == REL_X || code == REL_Y) {
-			dirty = 1;
+			dirty = motion = 1;
 			if (code == REL_X)
 				mx = LIMIT(mx + value, 0, fb_cols() - 1);
 			else
@@ -348,7 +360,7 @@ static void mouse_event(int type, int code, int value)
 		}
 		break;
 	case EV_ABS:
-		dirty = 1;
+		dirty = motion = 1;
 		if (code == ABS_X)
 			mx = LIMIT(value, 0, fb_cols() / 2 - 1);
 		else if (code == ABS_Y)
@@ -400,14 +412,25 @@ static void mouse_event(int type, int code, int value)
 	if (type == EV_KEY && value)
 		dirty = 2;	/* a click repaints at once, no motion needed */
 
-	/* left button held down: dragging extends the selection; cells
-	   inside the selection must not shrink a word or line picked by
-	   double/triple click, and the cell must be read after the
-	   motion in this event was applied */
-	if ((mbprev & 1) && type != EV_KEY && !mmode) {
-		int sr = sel_br, sc = sel_bc, er2 = sel_er, ec2 = sel_ec, t;
+	/* r and c above were read before this event moved the pointer: a
+	   motion event judged on the cell it is leaving looks like no change
+	   and is dropped, so take the cell the pointer is in now */
+	if (motion) {
 		r = mcell_r();
 		c = mcell_c();
+	}
+
+	/* a drag is the left button still held down, the release event is
+	   what clears that bit, that has left the cell the press landed in;
+	   movement still inside that cell is jitter and must leave the
+	   pending click for mouse_tick() to promote. mdrag latches it so
+	   tracking continues when the pointer comes back over the press
+	   cell, and cells inside a word or line picked by double or triple
+	   click must not shrink */
+	if ((mbprev & 1) && motion && !mmode &&
+		(mdrag || r != mpress_r || c != mpress_c)) {
+		int sr = sel_br, sc = sel_bc, er2 = sel_er, ec2 = sel_ec, t;
+		mdrag = 1;
 		sel_on = 1;
 		mark_on = mpend = 0;
 		if (sr > er2 || (sr == er2 && sc > ec2)) {

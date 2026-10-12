@@ -55,7 +55,7 @@ are supported:
 OPERATION	COMMAND
 ==============	=======================================
 left click	mark a cell; a second click selects the region
-left drag	drag out a selection from the pressed cell
+left drag	drag into the next cell to select a range
 right button	clear marker and selection; if none, send mode
 middle button	paste the yank register into the terminal
 wheel		scroll the focused terminal up/down
@@ -64,17 +64,23 @@ triple click	select the line under the pointer
 any key		hide the cursor and drop the selection
 ==============	=======================================
 
-Clicks are told apart by time: clicks on the same cell closer together
-than 400 ms merge into a double or a triple click and pick a word or a
-line, while a lone click registers as a marker only after 1 s goes by
-with no second click; two such single clicks form a region from the
-marker to the second cell, and holding the button down drags out the
-selection at once.  A right button click clears the marker, the
-selection and the cursor without touching the yank register; with
-nothing to clear it switches the mouse into send mode, where button
-clicks and the wheel go to the foreground terminal program as xterm
-SGR mouse escape sequences.  That mode persists until a right button
-click brings back the default terminal selection mode.  The
+Clicks are told apart by time and by the cell they land on: clicks on
+the same cell closer together than 400 ms merge into a double or a
+triple click and pick a word or a line, while a lone click registers as
+a marker only after 1 s goes by with no second click.  Two such single
+clicks form a region from the marker to the second cell and the next
+click starts a new marker there instead of growing the region.  A marker
+is an anchor, so it keeps a cell of its own and the pointer cursor goes
+on following the mouse while it is shown.  Holding the button down, a
+press with no release event seen yet, drags out the selection, but only
+once the pointer has crossed out of the cell the button went down in:
+motion inside that cell is mouse jitter and leaves the pending marker
+alone.  A right button click clears the marker, the selection and the
+cursor without touching the yank register; with nothing to clear it
+switches the mouse into send mode, where button clicks and the wheel
+go to the foreground terminal program as xterm SGR mouse escape
+sequences.  That mode persists until a right button click brings back
+the default terminal selection mode.  The
 selected text is taken from the visible screen, scrolled history included,
 lands in the yank register right away (search and yank commands ^Qy, ^Qb,
 ^Qv), and is pasted into the focused terminal on a middle button press.
