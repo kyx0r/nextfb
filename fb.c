@@ -280,11 +280,31 @@ static void mouse_event(int type, int code, int value)
 	}
 	if (type == EV_KEY && value)
 		dirty = 2;	/* a click repaints at once, no motion needed */
-	/* left button held down: dragging extends the selection */
+
+	/* left button held down: dragging extends the selection; cells
+	   inside the selection must not shrink a word or line picked by
+	   double/triple click, and the cell must be read after the
+	   motion in this event was applied */
 	if ((mbprev & 1) && type != EV_KEY) {
-		sel_er = r;
-		sel_ec = c;
+		int sr = sel_br, sc = sel_bc, er2 = sel_er, ec2 = sel_ec, t;
+		r = mcell_r();
+		c = mcell_c();
 		sel_on = 1;
+		if (sr > er2 || (sr == er2 && sc > ec2)) {
+			t = sr; sr = er2; er2 = t;
+			t = sc; sc = ec2; ec2 = t;
+		}
+		if (r < sr || (r == sr && c < sc)) {
+			sel_br = r;
+			sel_bc = c;
+			sel_er = er2;
+			sel_ec = ec2;
+		} else if (r > er2 || (r == er2 && c > ec2)) {
+			sel_br = sr;
+			sel_bc = sc;
+			sel_er = r;
+			sel_ec = c;
+		}
 		dirty = 1;
 	}
 	if (dirty && (r != orow || c != ocol || dirty > 1))
