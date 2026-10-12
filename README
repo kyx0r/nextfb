@@ -61,15 +61,18 @@ middle button	paste the selection into the terminal
 wheel		scroll the focused terminal up/down
 double click	select the word under the pointer
 triple click	select the line under the pointer
+any key		hide the cursor and drop the selection
 ==============	=======================================
 
 A selection begins with the left button (or with a double/triple click
 for a word or a line), is extended by dragging the left button, and is
-closed by the right button.  The selected text is read from the visible
-screen, including the scrolled history: it lands in the yank register
-right away, available to the terminal search and yank commands (^Qy,
-^Qb, ^Qv), and is also inserted back into the focused terminal on a
-middle button press.
+closed by the right button; the cursor and the selection vanish as soon
+as you type a key.  The selected text is read from the visible screen,
+including the scrolled history: it lands in the yank register right
+away, available to the terminal search and yank commands (^Qy, ^Qb,
+^Qv), and is also inserted back into the focused terminal on a middle
+button press.  The yank register keeps the text until a new selection
+replaces it.
 
 
 Nextfb automatically opens the most mouse-like event device it finds

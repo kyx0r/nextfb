@@ -278,8 +278,10 @@ static void mouse_event(int type, int code, int value)
 		}
 		break;
 	}
+	if (type == EV_KEY && value)
+		dirty = 2;	/* a click repaints at once, no motion needed */
 	/* left button held down: dragging extends the selection */
-	if (mbprev & 1) {
+	if ((mbprev & 1) && type != EV_KEY) {
 		sel_er = r;
 		sel_ec = c;
 		sel_on = 1;
@@ -584,6 +586,11 @@ static void directkey(void)
 	static int input_sz;
 	char *s;
 	int c = readchar();
+	/* any keystroke clears the mouse cursor and selection */
+	if (mrow >= 0 || sel_on) {
+		sel_on = 0;
+		term_mouse(-1, 0, 0, 0, 0, 0, 0);
+	}
 	if (tagslisted) {
 		term_redraw(1);
 		tagslisted = 0;
