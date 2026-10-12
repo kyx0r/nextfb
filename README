@@ -54,22 +54,32 @@ are supported:
 ==============	=======================================
 OPERATION	COMMAND
 ==============	=======================================
-left button	start a selection at the clicked cell
-left drag	extend the selection as the pointer moves
-right button	set the end of the selection
+left click	mark a cell; a second click selects the region
+left drag	drag out a selection from the pressed cell
+right button	clear marker and selection; if none, send mode
 middle button	paste the yank register into the terminal
 wheel		scroll the focused terminal up/down
 double click	select the word under the pointer
 triple click	select the line under the pointer
 any key		hide the cursor and drop the selection
 ==============	=======================================
-A left button starts a selection (double click a word, triple a line),
-drag extends it, the right button closes it; typing a key clears the cursor
-and the selection.  The text is taken from the visible screen, scrolled
-history included, lands in the yank register right away (search and yank
-commands ^Qy, ^Qb, ^Qv), and is pasted into the focused terminal on a middle
-button press.  The register is shared by every terminal and tag until a new
-selection replaces it.
+
+Clicks are told apart by time: clicks on the same cell closer together
+than 400 ms merge into a double or a triple click and pick a word or a
+line, while a lone click registers as a marker only after 1 s goes by
+with no second click; two such single clicks form a region from the
+marker to the second cell, and holding the button down drags out the
+selection at once.  A right button click clears the marker, the
+selection and the cursor without touching the yank register; with
+nothing to clear it switches the mouse into send mode, where button
+clicks and the wheel go to the foreground terminal program as xterm
+SGR mouse escape sequences.  That mode persists until a right button
+click brings back the default terminal selection mode.  The
+selected text is taken from the visible screen, scrolled history included,
+lands in the yank register right away (search and yank commands ^Qy, ^Qb,
+^Qv), and is pasted into the focused terminal on a middle button press.
+The register is shared by every terminal and tag until a new selection
+replaces it.
 
 The mouse is used only if named: the MOUSE macro in conf.h or the MOUSE
 environment variable, which takes precedence; a bare name such as "event24"

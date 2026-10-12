@@ -68,6 +68,8 @@ static int tagslisted;
 
 /* ---- mouse support ---- */
 
+#define DOUBLE_MS	400	/* same-cell clicks closer than this merge */
+#define CLICK_REG_MS	1000	/* a lone click registers only after this */
 #define MOUSE_DIR	"/dev/input"
 #define WHEEL_STEP	3
 
@@ -81,6 +83,10 @@ static int mlast_r, mlast_c;	/* cell of the previous click */
 static int msel_mode;		/* selection anchor: 0 cell 1 word 2 line */
 static int mclick;		/* consecutive click count on same cell */
 static int sel_on;		/* a mouse selection is active */
+static int mark_on;		/* a left click has set a marker */
+static int mpend;		/* a left click awaits CLICK_REG_MS to mark */
+static int mark_r, mark_c;	/* marker cell */
+static int mmode;		/* 0 selection, 1 send mouse events */
 static char *yank_buf;	/* yank register; kept until the next selection */
 static int sel_br, sel_bc;	/* selection begin cell */
 static int sel_er, sel_ec;	/* selection end cell */
@@ -183,7 +189,7 @@ static void mpaste(void)
 static void mclick_ev(int r, int c)
 {
 	long long now = mnow();
-	if (r == mlast_r && c == mlast_c && now - mtime < 400)
+	if (r == mlast_r && c == mlast_c && now - mtime < DOUBLE_MS)
 		mclick++;
 	else
 		mclick = 1;
@@ -191,14 +197,31 @@ static void mclick_ev(int r, int c)
 	mlast_r = r;
 	mlast_c = c;
 	msel_mode = mclick >= 3 ? 2 : mclick == 2 ? 1 : 0;
-	if (mclick >= 3)
+	if (mclick >= 3) {
 		msel_line(r);
-	else if (mclick == 2)
+		mark_on = mpend = 0;
+	} else if (mclick == 2) {
 		msel_word(r, c);
-	else {
+		mark_on = mpend = 0;
+	} else if (mark_on) {
+		sel_br = mark_r;
+		sel_bc = mark_c;
+		sel_er = r;
+		sel_ec = c;
+		sel_on = 1;
+		msel_mode = 0;
+		mark_on = 0;
+	} else {
+		/* the first click only parks the pending marker; it becomes a
+		   real marker in mouse_tick() once CLICK_REG ms go by with no
+		   further click, so double and triple clicks stay clean */
+		mpend = 1;
+		mark_r = r;
+		mark_c = c;
+		mtime = now;
 		sel_br = sel_er = r;
 		sel_bc = sel_ec = c;
-		sel_on = 1;
+		sel_on = 0;
 	}
 }
 
@@ -257,9 +280,46 @@ static void mouse_refresh(int yank)
 		t = br; br = er; er = t;
 		t = bc; bc = ec; ec = t;
 	}
-	term_mouse(mcell_r(), mcell_c(), sel_on, br, bc, er, ec);
+	if (mark_on || mpend) {
+		term_mouse(mark_r, mark_c, sel_on, br, bc, er, ec);
+	} else {
+		term_mouse(mcell_r(), mcell_c(), sel_on, br, bc, er, ec);
+	}
 	if (yank)
 		msel_yank();
+}
+
+static void mclear(void)
+{
+	if (mrow < 0 && !sel_on && !mark_on && !mpend)
+		return;
+	mark_on = 0;
+	mpend = 0;
+	mclick = 0;
+	msel_mode = 0;
+	sel_on = 0;
+	term_mouse(-1, 0, 0, 0, 0, 0, 0);
+}
+
+static void msendmouse(int button, int r, int c, int press)
+{
+	char buf[64];
+	snprintf(buf, sizeof(buf), "\033[<%d;%d;%d%c",
+		button, c + 1, r + 1, press ? 'M' : 'm');
+	term_sendstr(buf);
+}
+
+/* a lone left click turns into a marker only after CLICK_REG_MS passes
+   with no second click; pollterms() runs this every poll cycle */
+static void mouse_tick(void)
+{
+	if (!mpend || mmode || mnow() - mtime < CLICK_REG_MS)
+		return;
+	mpend = 0;
+	mark_on = 1;
+	mclick = 1;
+	msel_mode = 0;
+	mouse_refresh(0);
 }
 
 static void mouse_event(int type, int code, int value)
@@ -275,8 +335,17 @@ static void mouse_event(int type, int code, int value)
 			else
 				my = LIMIT(my + value, 0, fb_rows() - 1);
 		} else if (code == REL_WHEEL || code == REL_WHEEL_HI_RES ||
-			(code == REL_HWHEEL && !mouse_bit(mfd, EV_REL, REL_WHEEL)))
-			term_scrl(value > 0 ? WHEEL_STEP : -WHEEL_STEP);
+			(code == REL_HWHEEL && !mouse_bit(mfd, EV_REL, REL_WHEEL))) {
+			if (mmode) {
+				if (value) {
+					int button = value > 0 ? 64 : 65;
+					msendmouse(button, r, c, 1);
+					msendmouse(button, r, c, 0);
+				}
+			} else {
+				term_scrl(value > 0 ? WHEEL_STEP : -WHEEL_STEP);
+			}
+		}
 		break;
 	case EV_ABS:
 		dirty = 1;
@@ -287,21 +356,42 @@ static void mouse_event(int type, int code, int value)
 		break;
 	case EV_KEY:
 		if (code == BTN_LEFT) {
-			if (value && !(mbprev & 1))
-				mclick_ev(r, c);
+			if (value && !(mbprev & 1)) {
+				if (mmode) {
+					msendmouse(0, r, c, 1);
+					msendmouse(0, r, c, 0);
+				} else {
+					mclick_ev(r, c);
+				}
+			}
 			mbprev = value ? mbprev | 1 : mbprev & ~1;
 			dirty = selup = 1;
 		} else if (code == BTN_RIGHT) {
 			if (value && !(mbprev & 2)) {
-				sel_er = r;	/* set end of selection */
-				sel_ec = c;
-				sel_on = 1;
+				if (mmode) {
+					mmode = 0;	/* a right click leaves send mode */
+				} else if (sel_on || mark_on || mpend) {
+					mbprev = mbprev | 2;
+					mclear();
+					return;
+				} else {
+					mmode = 1;
+					mpend = 0;
+					mclick = 0;
+				}
 			}
 			mbprev = value ? mbprev | 2 : mbprev & ~2;
-			dirty = selup = 1;
+			dirty = 0;
+			selup = 0;
 		} else if (code == BTN_MIDDLE) {
-			if (value && !(mbprev & 4))
-				mpaste();
+			if (value && !(mbprev & 4)) {
+				if (mmode) {
+					msendmouse(2, r, c, 1);
+					msendmouse(2, r, c, 0);
+				} else {
+					mpaste();
+				}
+			}
 			mbprev = value ? mbprev | 4 : mbprev & ~4;
 			dirty = 1;
 		}
@@ -314,11 +404,12 @@ static void mouse_event(int type, int code, int value)
 	   inside the selection must not shrink a word or line picked by
 	   double/triple click, and the cell must be read after the
 	   motion in this event was applied */
-	if ((mbprev & 1) && type != EV_KEY) {
+	if ((mbprev & 1) && type != EV_KEY && !mmode) {
 		int sr = sel_br, sc = sel_bc, er2 = sel_er, ec2 = sel_ec, t;
 		r = mcell_r();
 		c = mcell_c();
 		sel_on = 1;
+		mark_on = mpend = 0;
 		if (sr > er2 || (sr == er2 && sc > ec2)) {
 			t = sr; sr = er2; er2 = t;
 			t = sc; sc = ec2; ec2 = t;
@@ -596,10 +687,9 @@ static void directkey(void)
 	static int input_sz;
 	char *s;
 	int c = readchar();
-	/* any keystroke clears the mouse cursor and selection */
-	if (mrow >= 0 || sel_on) {
-		sel_on = 0;
-		term_mouse(-1, 0, 0, 0, 0, 0, 0);
+	/* any keystroke clears the mouse cursor, marker and selection */
+	if (mrow >= 0 || sel_on || mark_on) {
+		mclear();
 	}
 	if (tagslisted) {
 		term_redraw(1);
@@ -786,8 +876,16 @@ static int pollterms(void)
 		ufds[n].events = POLLIN;
 		mi = n++;
 	}
-	if (poll(ufds, n, 1000) < 1)
+	int tmo = 1000;
+	if (mpend) {
+		tmo = (int) (mtime + CLICK_REG_MS - mnow());
+		if (tmo < 20)
+			tmo = 20;
+	}
+	if (poll(ufds, n, tmo) < 1) {
+		mouse_tick();
 		return 0;
+	}
 	if (ufds[0].revents & (POLLFLAGS & ~POLLIN))
 		return 1;
 	if (ufds[0].revents & POLLIN)
