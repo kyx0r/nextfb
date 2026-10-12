@@ -46,8 +46,8 @@ m-u		delete all input
 MOUSE
 =====
 
-When a pointing device is present under /dev/input, Nextfb reads it
-directly (through the evdev interface) and maps button presses to the
+Once you name a pointing device (see below), Nextfb reads it directly
+through the evdev interface and maps button presses to the
 terminal grid of the focused terminal.  The following mouse operations
 are supported:
 
@@ -57,7 +57,7 @@ OPERATION	COMMAND
 left button	start a selection at the clicked cell
 left drag	extend the selection as the pointer moves
 right button	set the end of the selection
-middle button	paste the selection into the terminal
+middle button	paste the yank register into the terminal
 wheel		scroll the focused terminal up/down
 double click	select the word under the pointer
 triple click	select the line under the pointer
@@ -71,19 +71,19 @@ as you type a key.  The selected text is read from the visible screen,
 including the scrolled history: it lands in the yank register right
 away, available to the terminal search and yank commands (^Qy, ^Qb,
 ^Qv), and is also inserted back into the focused terminal on a middle
-button press.  The yank register keeps the text until a new selection
-replaces it.
+button press.  The register is global to every terminal and tag, and
+it keeps its text until a new mouse selection replaces it.
 
 
-Nextfb automatically opens the most mouse-like event device it finds
-(evdev devices reporting mouse buttons together with REL/ABS motion;
-devices with a wheel rank highest).  If your mouse is a specific device,
-pin it by setting the MOUSE macro in conf.h to its path (for example
-"/dev/input/event24"), or by exporting the MOUSE environment variable
-with the same value before starting Nextfb.  A bare file name such as
-"event24" also works; the /dev/input directory is prepended.  If the
-pinned device cannot be opened, Nextfb prints a warning and falls back
-to auto-detection; a vanished device is reopened automatically.
+Nextfb never looks for a mouse by itself: you name the event device,
+either by setting the MOUSE macro in conf.h to its path (for example
+"/dev/input/event24") or by exporting the MOUSE environment variable
+before starting Nextfb, which then takes precedence.  A bare file name
+such as "event24" also works; the /dev/input directory is prepended.
+With neither set, mouse support is simply off.  The device is used
+exactly as given, so point it at a real evdev mouse; one that cannot be
+opened produces a single warning, and it is reopened automatically as
+soon as it shows up again.
 
 The pointer is shown as a block cursor over the focused terminal
 grid, and the selection is highlighted by inverting its cells.  Both

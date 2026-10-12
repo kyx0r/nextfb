@@ -28,7 +28,6 @@
 #include <sys/wait.h>
 #include <termios.h>
 #include <time.h>
-#include <dirent.h>
 #include <linux/input.h>
 #include <unistd.h>
 #include <linux/vt.h>
@@ -82,7 +81,7 @@ static int mlast_r, mlast_c;	/* cell of the previous click */
 static int msel_mode;		/* selection anchor: 0 cell 1 word 2 line */
 static int mclick;		/* consecutive click count on same cell */
 static int sel_on;		/* a mouse selection is active */
-static char *yank_buf;	/* yank register: mouse selections and ^Qy search */
+static char *yank_buf;	/* yank register; kept until the next selection */
 static int sel_br, sel_bc;	/* selection begin cell */
 static int sel_er, sel_ec;	/* selection end cell */
 
@@ -166,17 +165,15 @@ static void msel_line(int r)
 	sel_on = 1;
 }
 
+/* middle button: insert the yank register; it outlives the selection
+   and any keystroke, and is only replaced by a new selection */
 static void mpaste(void)
 {
-	char *s, *buf;
-	if (!sel_on)
-		return;
-	buf = s = mtext(sel_br, sel_bc, sel_er, sel_ec);
+	char *s = yank_buf;
 	if (!s)
 		return;
 	while (*s)
 		term_send(*s++);
-	free(buf);
 }
 
 static void mclick_ev(int r, int c)
@@ -223,8 +220,9 @@ static void msel_yank(void)
 	yank_buf = s;
 }
 
-/* hand the current cursor cell and selection to the term layer */
-static void mouse_refresh(void)
+/* hand the current cursor cell and selection to the term layer; the
+   yank register is refreshed only when the selection itself changed */
+static void mouse_refresh(int yank)
 {
 	int br = sel_br, bc = sel_bc, er = sel_er, ec = sel_ec, t;
 	if (sel_on && (br > er || (br == er && bc > ec))) {
@@ -232,13 +230,14 @@ static void mouse_refresh(void)
 		t = bc; bc = ec; ec = t;
 	}
 	term_mouse(mcell_r(), mcell_c(), sel_on, br, bc, er, ec);
-	msel_yank();
+	if (yank)
+		msel_yank();
 }
 
 static void mouse_event(int type, int code, int value)
 {
 	int r = mcell_r(), c = mcell_c();
-	int orow = mrow, ocol = mcol, dirty = 0;
+	int orow = mrow, ocol = mcol, dirty = 0, selup = 0;
 	switch (type) {
 	case EV_REL:
 		if (code == REL_X || code == REL_Y) {
@@ -263,7 +262,7 @@ static void mouse_event(int type, int code, int value)
 			if (value && !(mbprev & 1))
 				mclick_ev(r, c);
 			mbprev = value ? mbprev | 1 : mbprev & ~1;
-			dirty = 1;
+			dirty = selup = 1;
 		} else if (code == BTN_RIGHT) {
 			if (value && !(mbprev & 2)) {
 				sel_er = r;	/* set end of selection */
@@ -271,7 +270,7 @@ static void mouse_event(int type, int code, int value)
 				sel_on = 1;
 			}
 			mbprev = value ? mbprev | 2 : mbprev & ~2;
-			dirty = 1;
+			dirty = selup = 1;
 		} else if (code == BTN_MIDDLE) {
 			if (value && !(mbprev & 4))
 				mpaste();
@@ -311,12 +310,11 @@ static void mouse_event(int type, int code, int value)
 			sel_er = r;
 			sel_ec = c;
 		}
-		dirty = 1;
+		dirty = selup = 1;
 	}
 	if (dirty && (r != orow || c != ocol || dirty > 1))
-		mouse_refresh();
+		mouse_refresh(selup);
 }
-
 
 
 static int mouse_bit(int fd, int type, int bit)
@@ -327,30 +325,12 @@ static int mouse_bit(int fd, int type, int bit)
 	return bit / 8 < (int) sizeof(bits) && (bits[bit / 8] & (1 << (bit % 8)));
 }
 
-
-/* score how mouse-like this event device is; 0 means not a pointer */
-static int mouse_score(int fd)
-{
-	int btn = mouse_bit(fd, EV_KEY, BTN_MOUSE) ||
-			mouse_bit(fd, EV_KEY, BTN_LEFT);
-	int rel = mouse_bit(fd, EV_REL, REL_X);
-	int abs = mouse_bit(fd, EV_ABS, ABS_X);
-	int wheel = mouse_bit(fd, EV_REL, REL_WHEEL);
-	if (!btn || !(rel || abs))
-		return 0;
-	return 1 + rel + wheel * 2;	/* relative + wheel mice rank highest */
-}
-
-/* open an event device; validate as a pointer unless FORCE */
-static int mouse_try(char *path, int force)
+/* open the event device named by the user and grab it */
+static int mouse_try(char *path)
 {
 	int fd = open(path, O_RDONLY | O_NONBLOCK);
 	if (fd < 0)
 		return -1;
-	if (!force && mouse_score(fd) <= 0) {
-		close(fd);
-		return -1;
-	}
 	/* claim the device so other readers (getty, gpm, libinput) stay out;
 	   EVIOCGRAB just treats a nonzero arg as "grab" */
 	if (ioctl(fd, EVIOCGRAB, 1) < 0)
@@ -359,58 +339,34 @@ static int mouse_try(char *path, int force)
 }
 
 
-/* open a pointing device: honor the MOUSE env/macro, else auto-detect */
+/* open the pointing device named by the MOUSE env var or macro;
+   mouse support stays off when neither is set */
 static void mouse_open(void)
 {
-	DIR *d;
-	struct dirent *de;
 	char *want = getenv("MOUSE");
 	char path[512];
-	int best = -1, bestscore = 0;
+	static int warned;
 	if (mfd >= 0)
 		return;
+	if (!want || !*want)
+		want = MOUSE[0] ? MOUSE : NULL;
+	if (!want)
+		return;
+	if (*want != '/') {
+		snprintf(path, sizeof(path), "%s/%s", MOUSE_DIR, want);
+		want = path;
+	}
+	if ((mfd = mouse_try(want)) < 0) {
+		if (!warned++)
+			fprintf(stderr, "nextfb: mouse: cannot open %s\n",
+				want);
+		return;
+	}
 	/* start the software cursor at screen center */
 	mx = fb_cols() / 2;
 	my = fb_rows() / 2;
 	mrow = mcell_r();
 	mcol = mcell_c();
-	if (!want)
-		want = MOUSE[0] ? MOUSE : NULL;
-	if (want) {
-		char *p = want, path2[512];
-		static int warned;
-		if (*p != '/') {
-			snprintf(path2, sizeof(path2), "%s/%s", MOUSE_DIR,
-					p);
-			p = path2;
-		}
-		if ((mfd = mouse_try(p, 1)) >= 0)
-			return;
-		if (!warned++)
-			fprintf(stderr, "nextfb: mouse: cannot open %s\n",
-				p);
-	}
-	if (!(d = opendir(MOUSE_DIR)))
-		return;
-	while ((de = readdir(d)))
-		if (!strncmp(de->d_name, "event", 5)) {
-			int fd, sc;
-			snprintf(path, sizeof(path), "%s/%s", MOUSE_DIR,
-					de->d_name);
-			fd = open(path, O_RDONLY | O_NONBLOCK);
-			if (fd < 0)
-				continue;
-			sc = mouse_score(fd);
-			if (sc > bestscore) {
-				if (best >= 0)
-					close(best);
-				best = fd;
-				bestscore = sc;
-			} else
-				close(fd);
-		}
-	closedir(d);
-	mfd = best;
 }
 
 static void mouse_read(void)

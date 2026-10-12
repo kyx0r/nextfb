@@ -20,9 +20,10 @@
 #define TERM		"linux"
 
 
-/* mouse evdev device; "" = auto-detect the first one found.
-   Set to a path like "/dev/input/event24" to pick a specific device. */
-#define MOUSE		"/dev/input/event24"
+/* mouse evdev device, e.g. "/dev/input/event24"; a bare name like
+   "event24" is taken from /dev/input.  The MOUSE environment variable
+   overrides this; an empty value with no MOUSE set disables the mouse. */
+#define MOUSE		""
 
 /* foreground and background colors */
 #define FGCOLOR		WHITE15
