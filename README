@@ -63,52 +63,28 @@ double click	select the word under the pointer
 triple click	select the line under the pointer
 any key		hide the cursor and drop the selection
 ==============	=======================================
+A left button starts a selection (double click a word, triple a line),
+drag extends it, the right button closes it; typing a key clears the cursor
+and the selection.  The text is taken from the visible screen, scrolled
+history included, lands in the yank register right away (search and yank
+commands ^Qy, ^Qb, ^Qv), and is pasted into the focused terminal on a middle
+button press.  The register is shared by every terminal and tag until a new
+selection replaces it.
 
-A selection begins with the left button (or with a double/triple click
-for a word or a line), is extended by dragging the left button, and is
-closed by the right button; the cursor and the selection vanish as soon
-as you type a key.  The selected text is read from the visible screen,
-including the scrolled history: it lands in the yank register right
-away, available to the terminal search and yank commands (^Qy, ^Qb,
-^Qv), and is also inserted back into the focused terminal on a middle
-button press.  The register is global to every terminal and tag, and
-it keeps its text until a new mouse selection replaces it.
+The mouse is used only if named: the MOUSE macro in conf.h or the MOUSE
+environment variable, which takes precedence; a bare name such as "event24"
+gets /dev/input prepended.  With neither set there is no mouse.  A device
+that cannot be opened warns once and is reopened when it appears.  Nextfb
+grabs the evdev device, so gpm, X, or "libinput debug-events" see nothing
+while it runs.  REL_HWHEEL is used when the device has no REL_WHEEL.
 
+The pointer and the selection are drawn as inverted cells on the focused
+grid; the pointer starts at the screen center until the mouse moves.
 
-Nextfb never looks for a mouse by itself: you name the event device,
-either by setting the MOUSE macro in conf.h to its path (for example
-"/dev/input/event24") or by exporting the MOUSE environment variable
-before starting Nextfb, which then takes precedence.  A bare file name
-such as "event24" also works; the /dev/input directory is prepended.
-With neither set, mouse support is simply off.  The device is used
-exactly as given, so point it at a real evdev mouse; one that cannot be
-opened produces a single warning, and it is reopened automatically as
-soon as it shows up again.
-
-The pointer is shown as a block cursor over the focused terminal
-grid, and the selection is highlighted by inverting its cells.  Both
-are drawn through the normal character drawing path, redrawing the
-affected cells as the pointer moves, so they never leave traces nor
-corrupt the underlying text.  The cursor starts at the screen center
-until you move the mouse.
-Note that the kernel delivers evdev events to only one reader at a
-time, so Nextfb grabs the device; other mouse consumers such as gpm,
-X, or "libinput debug-events" see nothing (or are seen by nothing)
-while Nextfb runs.  Some mice, especially multi-node devices like the
-ROCCAT ones, report the wheel as REL_HWHEEL instead of REL_WHEEL;
-Nextfb scrolls from REL_HWHEEL too when the device has no REL_WHEEL.
-
-To execute only a single program in Nextfb, the program and its
-arguments should be passed as command line arguments of Nextfb. Nextfb
-executes the specified program in a terminal, disables all terminal
-switching commands, and exits as soon as the program finishes.
-
-Programs like fbpdf, fbvnc, and fbff read the FBDEV environment
-variable, which can specify the framebuffer device and its drawing
-region, like "/dev/fb0:1438x448+1+451".  Nextfb defines this
-environment variable when executing a program, so that if a tag is
-split, the program running in its terminal is limited to its
-corresponding framebuffer region.
+A program given as a Nextfb argument runs alone in a terminal, terminal
+switching is disabled, and Nextfb exits when the program finishes.
+Nextfb also sets FBDEV ("<fb>:<WxH>+<x>+<y>") for the programs it runs, so
+fbpdf, fbvnc, and fbff are limited to their terminal's framebuffer region.
 
 SETTING UP
 ==========
