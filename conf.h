@@ -19,6 +19,11 @@
 /* TERM variable for launched programs */
 #define TERM		"linux"
 
+
+/* mouse evdev device; "" = auto-detect the first one found.
+   Set to a path like "/dev/input/event24" to pick a specific device. */
+#define MOUSE		"/dev/input/event24"
+
 /* foreground and background colors */
 #define FGCOLOR		WHITE15
 #define BGCOLOR		BLACK0

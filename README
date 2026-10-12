@@ -42,6 +42,51 @@ m-n		completes the input till first suggestion
 m-u		delete all input
 ==============	=======================================
 
+
+MOUSE
+=====
+
+When a pointing device is present under /dev/input, Nextfb reads it
+directly (through the evdev interface) and maps button presses to the
+terminal grid of the focused terminal.  The following mouse operations
+are supported:
+
+==============	=======================================
+OPERATION	COMMAND
+==============	=======================================
+left button	start a selection at the clicked cell
+right button	set the end of the selection
+middle button	paste the selection into the terminal
+wheel		scroll the focused terminal up/down
+double click	select the word under the pointer
+triple click	select the line under the pointer
+==============	=======================================
+
+A selection is defined by a begin cell (left button, or expanded by a
+double/triple click) and an end cell (right button).  The selected text
+is read from the visible screen, including the scrolled history, and is
+inserted back into the focused terminal on a middle button press.
+
+
+Nextfb automatically opens the most mouse-like event device it finds
+(evdev devices reporting mouse buttons together with REL/ABS motion;
+devices with a wheel rank highest).  If your mouse is a specific device,
+pin it by setting the MOUSE macro in conf.h to its path (for example
+"/dev/input/event24"), or by exporting the MOUSE environment variable
+with the same value before starting Nextfb.  A bare file name such as
+"event24" also works; the /dev/input directory is prepended.  If the
+pinned device cannot be opened, Nextfb prints a warning and falls back
+to auto-detection; a vanished device is reopened automatically.
+
+The pointer is drawn on the framebuffer as a white crosshair with a
+black outline; it starts at the screen center until you move the mouse.
+Note that the kernel delivers evdev events to only one reader at a
+time, so Nextfb grabs the device; other mouse consumers such as gpm,
+X, or "libinput debug-events" see nothing (or are seen by nothing)
+while Nextfb runs.  Some mice, especially multi-node devices like the
+ROCCAT ones, report the wheel as REL_HWHEEL instead of REL_WHEEL;
+Nextfb scrolls from REL_HWHEEL too when the device has no REL_WHEEL.
+
 To execute only a single program in Nextfb, the program and its
 arguments should be passed as command line arguments of Nextfb. Nextfb
 executes the specified program in a terminal, disables all terminal

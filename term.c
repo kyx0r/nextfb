@@ -587,6 +587,18 @@ void term_scrl(int scrl)
 	}
 }
 
+int term_getchar(int r, int c)
+{
+	int hpos, off;
+	int *_scr;
+	if (r < 0 || r >= pad_rows() || c < 0 || c >= pad_cols())
+		return ' ';
+	hpos = term->hpos;
+	off = (r - hpos) * pad_cols();
+	_scr = r < hpos ? HISTROW(hpos - r) : term->screen + off;
+	return _scr[c];
+
+}
 static void scroll_screen(int sr, int nr, int n)
 {
 	draw_cursor(0);

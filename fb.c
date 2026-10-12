@@ -27,12 +27,17 @@
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <termios.h>
+#include <time.h>
+#include <dirent.h>
+#include <linux/input.h>
 #include <unistd.h>
 #include <linux/vt.h>
 #include <linux/fb.h>
 #include <sys/mman.h>
 #include "fb.h"
 #include "conf.h"
+
+static void mouse_draw(void);	/* defined below; used by the redraw path */
 #include "font.c"
 #include "term.c"
 #include "pad.c"
@@ -61,6 +66,309 @@ static char pass[1024];
 static unsigned int passlen;
 static int cmdmode;			/* execute a command and exit */
 static int tagslisted;
+
+
+/* ---- mouse support ---- */
+
+#define MOUSE_DIR	"/dev/input"
+#define WHEEL_STEP	3
+
+static int mouse_bit(int fd, int type, int bit);
+
+static int mfd = -1;		/* current mouse input event device */
+static int mx, my;		/* software mouse cursor position (pixels) */
+static int mbprev;		/* previously pressed mouse buttons */
+static long long mtime;		/* time of the last button press (ms) */
+static int mlast_r, mlast_c;	/* cell of the previous click */
+static int mclick;		/* consecutive click count on same cell */
+static int sel_on;		/* a mouse selection is active */
+static int sel_br, sel_bc;	/* selection begin cell */
+static int sel_er, sel_ec;	/* selection end cell */
+
+static long long mnow(void)
+{
+	struct timespec ts;
+	if (clock_gettime(CLOCK_MONOTONIC, &ts))
+		return 0;
+	return (long long) ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
+static int mcell_r(void)
+{
+	return LIMIT((my - pstate->fbroff) / pad_crows(), 0, pad_rows() - 1);
+}
+
+static int mcell_c(void)
+{
+	return LIMIT((mx - pstate->fbcoff) / pad_ccols(), 0, pad_cols() - 1);
+}
+
+static int mword(int c)
+{
+	return c > ' ' && !(c & DWCHAR) ? 1 : 0;
+}
+
+/* assemble the text between two visible cells into a malloc'd string */
+static char *mtext(int br, int bc, int er, int ec)
+{
+
+	if (br > er || (br == er && bc > ec)) {
+		int t;
+		t = br; br = er; er = t;
+		t = bc; bc = ec; ec = t;
+	}
+	int r, c, n = pad_cols() * 5;
+	char *buf = malloc((er - br + 1) * n);
+	char *s = buf;
+	if (!buf)
+		return NULL;
+
+	for (r = br; r <= er; r++) {
+		int cb = r == br ? bc : 0;
+		int ce = r == er ? ec : pad_cols() - 1;
+		for (c = cb; c <= ce; c++) {
+			int ch = term_getchar(r, c);
+			if (~ch & DWCHAR)
+				s += writeutf8(s, ch);
+		}
+		if (r != er)
+			*s++ = '\n';
+	}
+	*s = '\0';
+	return buf;
+}
+
+static void msel_word(int r, int c)
+{
+	int l, rt;
+	if (!mword(term_getchar(r, c))) {
+		sel_br = sel_er = r;
+		sel_bc = sel_ec = c;
+		sel_on = 1;
+		return;
+	}
+	for (l = c; l > 0 && mword(term_getchar(r, l - 1)); l--)
+		;
+	for (rt = c; rt < pad_cols() - 1 && mword(term_getchar(r, rt + 1)); rt++)
+		;
+	sel_br = sel_er = r;
+	sel_bc = l;
+	sel_ec = rt;
+	sel_on = 1;
+}
+
+static void msel_line(int r)
+{
+	sel_br = sel_er = r;
+	sel_bc = 0;
+	sel_ec = pad_cols() - 1;
+	sel_on = 1;
+}
+
+static void mpaste(void)
+{
+	char *s, *buf;
+	if (!sel_on)
+		return;
+	buf = s = mtext(sel_br, sel_bc, sel_er, sel_ec);
+	if (!s)
+		return;
+	while (*s)
+		term_send(*s++);
+	free(buf);
+}
+
+static void mclick_ev(int r, int c)
+{
+	long long now = mnow();
+	if (r == mlast_r && c == mlast_c && now - mtime < 400)
+		mclick++;
+	else
+		mclick = 1;
+	mtime = now;
+	mlast_r = r;
+	mlast_c = c;
+	if (mclick >= 3)
+		msel_line(r);
+	else if (mclick == 2)
+		msel_word(r, c);
+	else {
+		sel_br = sel_er = r;
+		sel_bc = sel_ec = c;
+		sel_on = 1;
+	}
+}
+
+static void mouse_event(int type, int code, int value)
+{
+	int r = mcell_r();
+	int c = mcell_c();
+	switch (type) {
+	case EV_REL:
+		if (code == REL_X)
+			mx = LIMIT(mx + value, 0, fb_cols() - 1);
+		else if (code == REL_Y)
+			my = LIMIT(my + value, 0, fb_rows() - 1);
+		else if (code == REL_WHEEL || code == REL_WHEEL_HI_RES ||
+			(code == REL_HWHEEL && !mouse_bit(mfd, EV_REL, REL_WHEEL)))
+			term_scrl(value > 0 ? WHEEL_STEP : -WHEEL_STEP);
+		break;
+	case EV_ABS:
+		if (code == ABS_X)
+			mx = LIMIT(value, 0, fb_cols() - 1);
+		else if (code == ABS_Y)
+			my = LIMIT(value, 0, fb_rows() - 1);
+		break;
+	case EV_KEY:
+		if (code == BTN_LEFT) {
+			if (value && !(mbprev & 1))
+				mclick_ev(r, c);
+			mbprev = value ? mbprev | 1 : mbprev & ~1;
+		} else if (code == BTN_RIGHT) {
+			if (value && !(mbprev & 2)) {
+				sel_er = r;	/* set end of selection */
+				sel_ec = c;
+				sel_on = 1;
+			}
+			mbprev = value ? mbprev | 2 : mbprev & ~2;
+		} else if (code == BTN_MIDDLE) {
+			if (value && !(mbprev & 4))
+				mpaste();
+			mbprev = value ? mbprev | 4 : mbprev & ~4;
+		}
+		break;
+	}
+}
+
+
+
+/* paint a pixel value directly onto the framebuffer */
+static void mouse_put(int x, int y, unsigned val)
+{
+	char *p;
+	int k;
+	if (x < 0 || y < 0 || x >= fb_cols() || y >= fb_rows())
+		return;
+	p = fb_mem(y) + x * pstate->bpp;
+	for (k = 0; k < pstate->bpp; k++)	/* little-endian */
+		p[k] = (val >> (k * 8)) & 0xff;
+}
+
+/* show where the mouse points: a white crosshair with a black outline */
+static void mouse_draw(void)
+{
+	unsigned black = fb_val(0, 0, 0), white = fb_val(255, 255, 255);
+	int d;
+	for (d = -8; d <= 8; d++) {
+		mouse_put(mx + d, my - 1, black);
+		mouse_put(mx + d, my + 1, black);
+		mouse_put(mx - 1, my + d, black);
+		mouse_put(mx + 1, my + d, black);
+	}
+	for (d = -7; d <= 7; d++) {
+		mouse_put(mx + d, my, white);
+		mouse_put(mx, my + d, white);
+	}
+}
+
+static int mouse_bit(int fd, int type, int bit)
+{
+	unsigned char bits[128] = {0};
+	if (ioctl(fd, EVIOCGBIT(type, sizeof(bits)), bits) < 0)
+		return 0;
+	return bit / 8 < (int) sizeof(bits) && (bits[bit / 8] & (1 << (bit % 8)));
+}
+
+
+/* score how mouse-like this event device is; 0 means not a pointer */
+static int mouse_score(int fd)
+{
+	int btn = mouse_bit(fd, EV_KEY, BTN_MOUSE) ||
+			mouse_bit(fd, EV_KEY, BTN_LEFT);
+	int rel = mouse_bit(fd, EV_REL, REL_X);
+	int abs = mouse_bit(fd, EV_ABS, ABS_X);
+	int wheel = mouse_bit(fd, EV_REL, REL_WHEEL);
+	if (!btn || !(rel || abs))
+		return 0;
+	return 1 + rel + wheel * 2;	/* relative + wheel mice rank highest */
+}
+
+/* open an event device; validate as a pointer unless FORCE */
+static int mouse_try(char *path, int force)
+{
+	int fd = open(path, O_RDONLY | O_NONBLOCK);
+	if (fd < 0)
+		return -1;
+	if (!force && mouse_score(fd) <= 0) {
+		close(fd);
+		return -1;
+	}
+	/* claim the device so other readers (getty, gpm, libinput) stay out;
+	   EVIOCGRAB just treats a nonzero arg as "grab" */
+	if (ioctl(fd, EVIOCGRAB, 1) < 0)
+		fprintf(stderr, "nextfb: mouse: cannot grab %s\n", path);
+	return fd;
+}
+
+
+/* open a pointing device: honor the MOUSE env/macro, else auto-detect */
+static void mouse_open(void)
+{
+	DIR *d;
+	struct dirent *de;
+	char *want = getenv("MOUSE");
+	char path[512];
+	int best = -1, bestscore = 0;
+	if (mfd >= 0)
+		return;
+	/* start the software cursor at screen center */
+	mx = fb_cols() / 2;
+	my = fb_rows() / 2;
+	if (!want)
+		want = MOUSE[0] ? MOUSE : NULL;
+	if (want) {
+		char *p = want, path2[512];
+		static int warned;
+		if (*p != '/') {
+			snprintf(path2, sizeof(path2), "%s/%s", MOUSE_DIR,
+					p);
+			p = path2;
+		}
+		if ((mfd = mouse_try(p, 1)) >= 0)
+			return;
+		if (!warned++)
+			fprintf(stderr, "nextfb: mouse: cannot open %s\n",
+				p);
+	}
+	if (!(d = opendir(MOUSE_DIR)))
+		return;
+	while ((de = readdir(d)))
+		if (!strncmp(de->d_name, "event", 5)) {
+			int fd, sc;
+			snprintf(path, sizeof(path), "%s/%s", MOUSE_DIR,
+					de->d_name);
+			fd = open(path, O_RDONLY | O_NONBLOCK);
+			if (fd < 0)
+				continue;
+			sc = mouse_score(fd);
+			if (sc > bestscore) {
+				if (best >= 0)
+					close(best);
+				best = fd;
+				bestscore = sc;
+			} else
+				close(fd);
+		}
+	closedir(d);
+	mfd = best;
+}
+
+static void mouse_read(void)
+{
+	struct input_event ev;
+	while (read(mfd, &ev, sizeof(ev)) == (int) sizeof(ev))
+		mouse_event(ev.type, ev.code, ev.value);
+}
 
 static int readchar(void)
 {
@@ -143,6 +451,7 @@ static int t_show(int idx, int show)
 		show += !terms[idx]->fd || !TERMSNAP(idx) || scr_load(idx);
 	if (show > 0)
 		term_redraw(show == 3);
+	mouse_draw();
 	return show;
 }
 
@@ -257,6 +566,7 @@ static void directkey(void)
 	int c = readchar();
 	if (tagslisted) {
 		term_redraw(1);
+	mouse_draw();
 		tagslisted = 0;
 	}
 	if (*PASS && locked) {
@@ -306,6 +616,7 @@ static void directkey(void)
 			misc_save(&terms[i]->cur);
 			term_load(terms[i], 1);
 			term_redraw(1);
+	mouse_draw();
 			term_send('');
 			return;
 		case 'b':
@@ -321,6 +632,7 @@ static void directkey(void)
 			input_len = 0;
 			input_sz = 0;
 			term_redraw(1);
+	mouse_draw();
 			return;
 		case 'u':
 		case 'n':
@@ -355,6 +667,7 @@ static void directkey(void)
 			return;
 		case 'l':
 			term_redraw(1);
+	mouse_draw();
 			return;
 		case CTRLKEY('l'):
 			locked = 1;
@@ -416,7 +729,7 @@ static void peepback(int termid)
 
 static int pollterms(void)
 {
-	struct pollfd ufds[NTERMS + 1];
+	struct pollfd ufds[NTERMS + 2];
 	int term_idx[NTERMS + 1];
 	int i;
 	int n = 1;
@@ -429,13 +742,33 @@ static int pollterms(void)
 			term_idx[n++] = i;
 		}
 	}
+
+	/* retry if the device failed or vanished; poll timeout paces this */
+	if (mfd < 0)
+		mouse_open();
+	int mi = -1;
+	if (mfd >= 0) {
+		ufds[n].fd = mfd;
+		ufds[n].events = POLLIN;
+		mi = n++;
+	}
 	if (poll(ufds, n, 1000) < 1)
 		return 0;
 	if (ufds[0].revents & (POLLFLAGS & ~POLLIN))
 		return 1;
 	if (ufds[0].revents & POLLIN)
 		directkey();
+
+	if (mi >= 0 && ufds[mi].revents & (POLLFLAGS & ~POLLIN)) {
+		close(mfd);
+		mfd = -1;
+		mi = -1;
+	} else if (mi >= 0 && ufds[mi].revents & POLLIN)
+		mouse_read();
 	for (i = 1; i < n; i++) {
+
+		if (i == mi)
+			continue;
 		if (ufds[i].revents & (POLLFLAGS & ~POLLIN))
 			continue;
 		if (ufds[i].revents & POLLIN) {
@@ -444,6 +777,8 @@ static int pollterms(void)
 			peepback(term_idx[i]);
 		}
 	}
+	if (mfd >= 0)
+		mouse_draw();
 	return 0;
 }
 
@@ -461,10 +796,13 @@ static void mainloop(char **args)
 	tcsetattr(0, TCSAFLUSH, &termios);
 	term_load(terms[cterm()], 1);
 	term_redraw(1);
+	mouse_draw();
 	if (args) {
 		cmdmode = 1;
 		t_exec(args);
 	}
+
+	mouse_open();
 	while (!exitit)
 		if (pollterms())
 			break;
