@@ -55,6 +55,7 @@ are supported:
 OPERATION	COMMAND
 ==============	=======================================
 left button	start a selection at the clicked cell
+left drag	extend the selection as the pointer moves
 right button	set the end of the selection
 middle button	paste the selection into the terminal
 wheel		scroll the focused terminal up/down
@@ -62,10 +63,13 @@ double click	select the word under the pointer
 triple click	select the line under the pointer
 ==============	=======================================
 
-A selection is defined by a begin cell (left button, or expanded by a
-double/triple click) and an end cell (right button).  The selected text
-is read from the visible screen, including the scrolled history, and is
-inserted back into the focused terminal on a middle button press.
+A selection begins with the left button (or with a double/triple click
+for a word or a line), is extended by dragging the left button, and is
+closed by the right button.  The selected text is read from the visible
+screen, including the scrolled history: it lands in the yank register
+right away, available to the terminal search and yank commands (^Qy,
+^Qb, ^Qv), and is also inserted back into the focused terminal on a
+middle button press.
 
 
 Nextfb automatically opens the most mouse-like event device it finds
@@ -78,8 +82,12 @@ with the same value before starting Nextfb.  A bare file name such as
 pinned device cannot be opened, Nextfb prints a warning and falls back
 to auto-detection; a vanished device is reopened automatically.
 
-The pointer is drawn on the framebuffer as a white crosshair with a
-black outline; it starts at the screen center until you move the mouse.
+The pointer is shown as a block cursor over the focused terminal
+grid, and the selection is highlighted by inverting its cells.  Both
+are drawn through the normal character drawing path, redrawing the
+affected cells as the pointer moves, so they never leave traces nor
+corrupt the underlying text.  The cursor starts at the screen center
+until you move the mouse.
 Note that the kernel delivers evdev events to only one reader at a
 time, so Nextfb grabs the device; other mouse consumers such as gpm,
 X, or "libinput debug-events" see nothing (or are seen by nothing)

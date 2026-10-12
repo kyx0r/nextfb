@@ -37,7 +37,6 @@
 #include "fb.h"
 #include "conf.h"
 
-static void mouse_draw(void);	/* defined below; used by the redraw path */
 #include "font.c"
 #include "term.c"
 #include "pad.c"
@@ -82,6 +81,7 @@ static long long mtime;		/* time of the last button press (ms) */
 static int mlast_r, mlast_c;	/* cell of the previous click */
 static int mclick;		/* consecutive click count on same cell */
 static int sel_on;		/* a mouse selection is active */
+static char *yank_buf;	/* yank register: mouse selections and ^Qy search */
 static int sel_br, sel_bc;	/* selection begin cell */
 static int sel_er, sel_ec;	/* selection end cell */
 
@@ -199,31 +199,69 @@ static void mclick_ev(int r, int c)
 	}
 }
 
+/* put the selection text in the yank register immediately; drop trailing
+   blanks since the selection usually reaches the end of a line */
+static void msel_yank(void)
+{
+	char *s;
+	int e;
+	if (!sel_on)
+		return;
+	s = mtext(sel_br, sel_bc, sel_er, sel_ec);
+	if (!s)
+		return;
+	e = (int)strlen(s);
+	while (e && (s[e - 1] == ' ' || s[e - 1] == '\n'))
+		s[--e] = '\0';
+	if (!e) {
+		free(s);
+		return;
+	}
+	free(yank_buf);
+	yank_buf = s;
+}
+
+/* hand the current cursor cell and selection to the term layer */
+static void mouse_refresh(void)
+{
+	int br = sel_br, bc = sel_bc, er = sel_er, ec = sel_ec, t;
+	if (sel_on && (br > er || (br == er && bc > ec))) {
+		t = br; br = er; er = t;
+		t = bc; bc = ec; ec = t;
+	}
+	term_mouse(mcell_r(), mcell_c(), sel_on, br, bc, er, ec);
+	msel_yank();
+}
+
 static void mouse_event(int type, int code, int value)
 {
-	int r = mcell_r();
-	int c = mcell_c();
+	int r = mcell_r(), c = mcell_c();
+	int orow = mrow, ocol = mcol, dirty = 0;
 	switch (type) {
 	case EV_REL:
-		if (code == REL_X)
-			mx = LIMIT(mx + value, 0, fb_cols() - 1);
-		else if (code == REL_Y)
-			my = LIMIT(my + value, 0, fb_rows() - 1);
-		else if (code == REL_WHEEL || code == REL_WHEEL_HI_RES ||
+		if (code == REL_X || code == REL_Y) {
+			dirty = 1;
+			if (code == REL_X)
+				mx = LIMIT(mx + value, 0, fb_cols() - 1);
+			else
+				my = LIMIT(my + value, 0, fb_rows() - 1);
+		} else if (code == REL_WHEEL || code == REL_WHEEL_HI_RES ||
 			(code == REL_HWHEEL && !mouse_bit(mfd, EV_REL, REL_WHEEL)))
 			term_scrl(value > 0 ? WHEEL_STEP : -WHEEL_STEP);
 		break;
 	case EV_ABS:
+		dirty = 1;
 		if (code == ABS_X)
-			mx = LIMIT(value, 0, fb_cols() - 1);
+			mx = LIMIT(value, 0, fb_cols() / 2 - 1);
 		else if (code == ABS_Y)
-			my = LIMIT(value, 0, fb_rows() - 1);
+			my = LIMIT(value, 0, fb_rows() / 2 - 1);
 		break;
 	case EV_KEY:
 		if (code == BTN_LEFT) {
 			if (value && !(mbprev & 1))
 				mclick_ev(r, c);
 			mbprev = value ? mbprev | 1 : mbprev & ~1;
+			dirty = 1;
 		} else if (code == BTN_RIGHT) {
 			if (value && !(mbprev & 2)) {
 				sel_er = r;	/* set end of selection */
@@ -231,45 +269,27 @@ static void mouse_event(int type, int code, int value)
 				sel_on = 1;
 			}
 			mbprev = value ? mbprev | 2 : mbprev & ~2;
+			dirty = 1;
 		} else if (code == BTN_MIDDLE) {
 			if (value && !(mbprev & 4))
 				mpaste();
 			mbprev = value ? mbprev | 4 : mbprev & ~4;
+			dirty = 1;
 		}
 		break;
 	}
-}
-
-
-
-/* paint a pixel value directly onto the framebuffer */
-static void mouse_put(int x, int y, unsigned val)
-{
-	char *p;
-	int k;
-	if (x < 0 || y < 0 || x >= fb_cols() || y >= fb_rows())
-		return;
-	p = fb_mem(y) + x * pstate->bpp;
-	for (k = 0; k < pstate->bpp; k++)	/* little-endian */
-		p[k] = (val >> (k * 8)) & 0xff;
-}
-
-/* show where the mouse points: a white crosshair with a black outline */
-static void mouse_draw(void)
-{
-	unsigned black = fb_val(0, 0, 0), white = fb_val(255, 255, 255);
-	int d;
-	for (d = -8; d <= 8; d++) {
-		mouse_put(mx + d, my - 1, black);
-		mouse_put(mx + d, my + 1, black);
-		mouse_put(mx - 1, my + d, black);
-		mouse_put(mx + 1, my + d, black);
+	/* left button held down: dragging extends the selection */
+	if (mbprev & 1) {
+		sel_er = r;
+		sel_ec = c;
+		sel_on = 1;
+		dirty = 1;
 	}
-	for (d = -7; d <= 7; d++) {
-		mouse_put(mx + d, my, white);
-		mouse_put(mx, my + d, white);
-	}
+	if (dirty && (r != orow || c != ocol || dirty > 1))
+		mouse_refresh();
 }
+
+
 
 static int mouse_bit(int fd, int type, int bit)
 {
@@ -324,6 +344,8 @@ static void mouse_open(void)
 	/* start the software cursor at screen center */
 	mx = fb_cols() / 2;
 	my = fb_rows() / 2;
+	mrow = mcell_r();
+	mcol = mcell_c();
 	if (!want)
 		want = MOUSE[0] ? MOUSE : NULL;
 	if (want) {
@@ -451,7 +473,6 @@ static int t_show(int idx, int show)
 		show += !terms[idx]->fd || !TERMSNAP(idx) || scr_load(idx);
 	if (show > 0)
 		term_redraw(show == 3);
-	mouse_draw();
 	return show;
 }
 
@@ -559,14 +580,12 @@ static void directkey(void)
 {
 	static int yank;
 	static char *input_buf;
-	static char *yank_buf;
 	static int input_len;
 	static int input_sz;
 	char *s;
 	int c = readchar();
 	if (tagslisted) {
 		term_redraw(1);
-	mouse_draw();
 		tagslisted = 0;
 	}
 	if (*PASS && locked) {
@@ -616,7 +635,6 @@ static void directkey(void)
 			misc_save(&terms[i]->cur);
 			term_load(terms[i], 1);
 			term_redraw(1);
-	mouse_draw();
 			term_send('');
 			return;
 		case 'b':
@@ -632,7 +650,6 @@ static void directkey(void)
 			input_len = 0;
 			input_sz = 0;
 			term_redraw(1);
-	mouse_draw();
 			return;
 		case 'u':
 		case 'n':
@@ -667,7 +684,6 @@ static void directkey(void)
 			return;
 		case 'l':
 			term_redraw(1);
-	mouse_draw();
 			return;
 		case CTRLKEY('l'):
 			locked = 1;
@@ -777,8 +793,6 @@ static int pollterms(void)
 			peepback(term_idx[i]);
 		}
 	}
-	if (mfd >= 0)
-		mouse_draw();
 	return 0;
 }
 
@@ -796,7 +810,6 @@ static void mainloop(char **args)
 	tcsetattr(0, TCSAFLUSH, &termios);
 	term_load(terms[cterm()], 1);
 	term_redraw(1);
-	mouse_draw();
 	if (args) {
 		cmdmode = 1;
 		t_exec(args);
