@@ -86,7 +86,8 @@ static void mrow_view(int r)
 		paint_screen();
 		return;
 	}
-	if (r >= 0 && candraw(r, r + 1))
+	/* the row may come from a selection made before a resize */
+	if (r >= 0 && r < pad_rows() && candraw(r, r + 1))
 		_draw_row(r);
 }
 
@@ -143,6 +144,9 @@ static void _draw_row(int r)
 static int candraw(int sr, int er)
 {
 	int i;
+	/* keep the marks inside dirty[] whatever range was handed in */
+	sr = LIMIT(sr, 0, pad_rows());
+	er = LIMIT(er, 0, pad_rows());
 	if (lazy)
 		for (i = sr; i < er; i++)
 			dirty[i] = 1;
@@ -749,9 +753,26 @@ static int cmpstr(const void *a, const void *b)
 
 char *term_yank(const char *inbuf)
 {
-	char buf[pad_rows() * pad_cols() * 5];
+	char buf[pad_rows() * pad_cols() * 5 + 1];
 	char *s = buf;
 	int i, j, hpos = term->hpos;
+	int sz = pad_rows() * pad_cols() * 5;
+	/* a match starts on a screen cell, so cells bound their count */
+	int amax = pad_rows() * pad_cols();
+	char *parts = malloc(sz);
+	char *ps = parts;
+	char *_ps;
+	char **arrs = malloc(amax * sizeof(arrs[0]));
+	char *part;
+	int ilen;
+	int scnt = 0;
+	if (!inbuf)
+		inbuf = "";
+	if (!parts || !arrs) {
+		free(parts);
+		free(arrs);
+		return NULL;
+	}
 	for (i = 0; i < pad_rows(); i++) {
 		int off = (i - hpos) * pad_cols();
 		int *_scr = i < hpos ? HISTROW(hpos - i) : term->screen + off;
@@ -761,21 +782,21 @@ char *term_yank(const char *inbuf)
 		*s++ = '\n';
 	}
 	*s = '\0';
-	int ilen = strlen(inbuf);
-	char *parts = malloc(pad_rows() * pad_cols() * 5);
-	char *ps = parts;
-	char *_ps;
-	char *part = strstr(buf, inbuf);
-	int scnt = 0;
-	char *arrs[pad_cols()];
+	ilen = strlen(inbuf);
 	if (!ilen) {
 		*ps = '\0';
 		goto empty_str;
 	}
+	part = strstr(buf, inbuf);
 	while (part) {
 		s = strchr(part + ilen, ' ');
 		if (!s)
 			s = strchr(part + ilen, '\n');
+		if (!s)
+			s = part + strlen(part);	/* only the tail is left */
+		/* every part is kept verbatim with a newline and the NUL */
+		if (scnt >= amax || ps - parts + (s - part) + 2 > sz)
+			break;	/* out of room, keep what was collected */
 		_ps = ps;
 		memcpy(ps, part, s - part);
 		ps += s - part;
@@ -786,10 +807,17 @@ char *term_yank(const char *inbuf)
 			*ps = '\0';
 		} else
 			arrs[scnt++] = _ps;
+		if (s == part + strlen(part))
+			break;	/* the tail; nothing left to search in */
 		part = strstr(part + (s - part) + 1, inbuf);
 	}
 	qsort(arrs, scnt, sizeof(char*), cmpstr);
 	_ps = malloc(ps - parts + 1);
+	if (!_ps) {
+		free(parts);
+		parts = NULL;
+		goto empty_str;
+	}
 	for (j = 0, i = 0; i < scnt; i++) {
 		int b = dstrlen(arrs[i], '\n') + 1;
 		memcpy(_ps+j, arrs[i], b);
@@ -799,13 +827,16 @@ char *term_yank(const char *inbuf)
 
 	}
 	_ps[j] = '\0';
+	free(arrs);
+	arrs = NULL;	/* the label below releases it for the short paths */
 	free(parts);
 	parts = _ps;
 	empty_str:
+	free(arrs);
 	for (i = 0; col + i < pad_cols(); i++)
 		pad_put(i > ilen ? ' ' : inbuf[i], row, col+i, FGCOLOR, BLUE4);
 	i = ilen;
-	j = strlen(parts);
+	j = parts ? strlen(parts) : 0;
 	for (; col + i < pad_cols(); i++)
 		pad_put(i > j ? ' ' : parts[i], row, col+i, FGCOLOR, BLACK8);
 	if (j)
