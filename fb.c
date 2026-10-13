@@ -90,6 +90,7 @@ static int mpend;		/* a left click awaits CLICK_REG_MS to mark */
 static int mark_r, mark_c;	/* marker cell */
 static int mmode;		/* 0 selection, 1 send mouse events */
 static char *yank_buf;	/* yank register; kept until the next selection */
+static int yank_all;	/* the register is selected text: paste every line of it */
 static int sel_br, sel_bc;	/* selection begin cell */
 static int sel_er, sel_ec;	/* selection end cell */
 
@@ -246,7 +247,7 @@ static void yank_sanitize(char *s)
 
 /* take ownership of s as the new yank register; an empty s after
    sanitizing leaves the previous register alone */
-static void yank_set(char *s)
+static void yank_set(char *s, int all)
 {
 	if (!s)
 		return;
@@ -257,6 +258,7 @@ static void yank_set(char *s)
 	}
 	free(yank_buf);
 	yank_buf = s;
+	yank_all = all;
 }
 
 /* put the selection text in the yank register immediately; drop trailing
@@ -273,7 +275,7 @@ static void msel_yank(void)
 	e = (int)strlen(s);
 	while (e && (s[e - 1] == ' ' || s[e - 1] == '\n'))
 		s[--e] = '\0';
-	yank_set(s);
+	yank_set(s, 1);
 }
 
 /* hand the current cursor cell and selection to the term layer; the
@@ -769,9 +771,11 @@ static void directkey(void)
 			return;
 		case 'b':
 		case 'v':
-			/* paste the first line of the register; the test on
-			   *s also covers a register cleared meanwhile */
-			for (s = yank_buf; s && *s && *s != '\n'; s++)
+			/* a register filled by the yank search holds suggestions, so
+			   only its first line is pasteable; a register filled by a
+			   selection holds text, so paste every line of it; the test
+			   on *s also covers a register cleared meanwhile */
+			for (s = yank_buf; s && *s && (yank_all || *s != 0x0a); s++)
 				term_send(*s);
 			if (c == 'v')
 				return;
@@ -854,7 +858,7 @@ static void directkey(void)
 		input_buf[input_len] = '\0';
 		free(yank_buf);
 		yank_buf = NULL;
-		yank_set(term_yank(input_buf));
+		yank_set(term_yank(input_buf), 0);
 		return;
 	}
 	if (c != -1 && tmain())
