@@ -130,7 +130,7 @@ static void _draw_row(int r)
 	int i;
 	/* call pad_fill() only once for blank columns with identical backgrounds */
 	for (i = 0; i < pad_cols(); i++) {
-		int mic = mrev(r, i);	/* pointer or selected: always drawn */
+		int mic = mrev(r, i) || r == row;	/* pointer, selection or app cursor: always drawn */
 		cbg = bgs[OFFSET(r, i)];
 		cch = screen[OFFSET(r, i)] ? screen[OFFSET(r, i)] : ' ';
 		if (fsc >= 0 && (cbg != fbg || cch != ' ' || mic)) {
@@ -138,7 +138,7 @@ static void _draw_row(int r)
 			fsc = -1;
 		}
 		if (cch != ' ' || mic) {
-			_draw_pos(r, i, 0);
+			_draw_pos(r, i, r == row && i == col);
 		} else if (fsc < 0) {
 			fsc = i;
 			fbg = cbg;
