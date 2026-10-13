@@ -94,8 +94,11 @@ that cannot be opened warns once and is reopened when it appears.  Nextfb
 grabs the evdev device, so gpm, X, or "libinput debug-events" see nothing
 while it runs.  REL_HWHEEL is used when the device has no REL_WHEEL.
 
-The pointer and the selection are drawn as inverted cells on the focused
-grid; the pointer starts at the screen center until the mouse moves.
+The selection is drawn as inverted cells on the focused grid; the
+pointer is marked with a bar at the bottom of its cell, in the color
+the cell draws, so it stays visible even on the application cursor or
+on selected text.  The pointer starts at the screen center until the
+mouse moves.
 
 A program given as a Nextfb argument runs alone in a terminal, terminal
 switching is disabled, and Nextfb exits when the program finishes.

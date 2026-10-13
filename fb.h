@@ -42,6 +42,7 @@ void pad_free(struct pad_state *state);
 void pad_conf(int row, int col, int rows, int cols);
 void pad_put(int ch, int r, int c, int fg, int bg);
 void pad_fill(int sr, int er, int sc, int ec, int c);
+void pad_mark(int r, int c, int color);
 void pad_border(unsigned c, int wid);
 char *pad_fbdev(void);
 

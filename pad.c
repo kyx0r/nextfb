@@ -201,6 +201,14 @@ void pad_fill(int sr, int er, int sc, int ec, int c)
 	fb_box(sr * pstate->fnrows, fber, sc * pstate->fncols, fbec, color2fb(c & FN_C));
 }
 
+/* pointer marker: the bottom pixel row of one cell */
+void pad_mark(int r, int c, int color)
+{
+	int er = (r + 1) * pstate->fnrows;
+	fb_box(er - 1, er, c * pstate->fncols, (c + 1) * pstate->fncols,
+		color2fb(color & FN_C));
+}
+
 char *pad_fbdev(void)
 {
 	static char fbdev[2048];

@@ -50,9 +50,11 @@ static int clrmap(int c)
 
 /* low level drawing and lazy updating */
 
-/* mouse cursor cell and selection, drawn by all rendering paths so
-   partial refreshes never leave trails or corrupt cells; r < 0 hides */
-static int mrow = -1, mcol;		/* block cursor cell */
+/* mouse pointer cell and selection, drawn by all rendering paths so
+   partial refreshes never leave trails or corrupt cells; r < 0 hides;
+   the selection inverts cells, the pointer is a bar in the drawn fg
+   color, so it stays visible over the application cursor as well */
+static int mrow = -1, mcol;		/* pointer cell */
 static int msel;			/* selection active */
 static int msr, msc, mer, mec;		/* selection begin/end cells */
 
@@ -67,7 +69,7 @@ static int in_msel(int r, int c)
 	return 1;
 }
 
-/* invert the cell: mouse block cursor or selected text */
+/* the cell must be drawn whole: pointer marker or selection */
 static int mrev(int r, int c)
 {
 	return (r == mrow && c == mcol) || in_msel(r, c);
@@ -109,11 +111,15 @@ static int bgcolor(void)
 /* assumes visible && !lazy */
 static void _draw_pos(int r, int c, int cursor)
 {
-	int rev = (cursor && mode & MODE_CURSOR) != mrev(r, c);
+	int rev = (cursor && mode & MODE_CURSOR) != in_msel(r, c);
 	int i = OFFSET(r, c);
 	int fg = rev ? bgs[i] : fgs[i];
 	int bg = rev ? fgs[i] : bgs[i];
+	/* one fg/bg pair cannot show two blocks: the app cursor XORs the
+	   selection only, the pointer rides on top as a marker bar */
 	pad_put(screen[i], r, c, fg, bg);
+	if (r == mrow && c == mcol)
+		pad_mark(r, c, fg);
 }
 
 /* assumes visible && !lazy */
@@ -124,7 +130,7 @@ static void _draw_row(int r)
 	int i;
 	/* call pad_fill() only once for blank columns with identical backgrounds */
 	for (i = 0; i < pad_cols(); i++) {
-		int mic = mrev(r, i);	/* cursor or selected: always drawn */
+		int mic = mrev(r, i);	/* pointer or selected: always drawn */
 		cbg = bgs[OFFSET(r, i)];
 		cch = screen[OFFSET(r, i)] ? screen[OFFSET(r, i)] : ' ';
 		if (fsc >= 0 && (cbg != fbg || cch != ' ' || mic)) {
@@ -658,10 +664,12 @@ static void paint_screen(void)
 		for (j = 0; j < pad_cols(); j++) {
 			int fg = _fgs ? _fgs[j] : FGCOLOR;
 			int bg = _bgs ? _bgs[j] : BGCOLOR;
-			if (mrev(i, j)) {
+			if (in_msel(i, j)) {
 				int t = fg; fg = bg; bg = t;
 			}
 			pad_put(_scr[j], i, j, fg, bg);
+			if (i == mrow && j == mcol)
+				pad_mark(i, j, fg);
 		}
 	}
 }
