@@ -484,8 +484,18 @@ static int mouse_bit(int fd, int type, int bit)
 	return bit / 8 < (int) sizeof(bits) && (bits[bit / 8] & (1 << (bit % 8)));
 }
 
+/* a pointing device has a left button and an X and a Y axis */
+static int mouse_is(int fd)
+{
+	if (!mouse_bit(fd, EV_KEY, BTN_LEFT))
+		return 0;
+	return (mouse_bit(fd, EV_REL, REL_X) && mouse_bit(fd, EV_REL, REL_Y)) ||
+		(mouse_bit(fd, EV_ABS, ABS_X) && mouse_bit(fd, EV_ABS, ABS_Y));
+}
+
 /* open the event device at path and grab it; a device that reports an
-   absolute axis also gives up the range that axis moves in */
+   absolute axis also gives up the range that axis moves in.  Returns
+   -1 if it cannot be opened and -2 if it is not a pointing device */
 static int mouse_try(char *path)
 {
 	struct input_absinfo ab;
@@ -493,6 +503,13 @@ static int mouse_try(char *path)
 	int i;
 	if (fd < 0)
 		return -1;
+	/* a grab takes the device away from every other reader, the console
+	   keyboard included: a keyboard named by mistake would leave no way
+	   to type, switch consoles or quit, so only a pointer is accepted */
+	if (!mouse_is(fd)) {
+		close(fd);
+		return -2;
+	}
 	for (i = 0; i < 2; i++) {
 		abs_min[i] = abs_max[i] = 0;
 		if (!ioctl(fd, EVIOCGABS(ABS_X + i), &ab) &&
@@ -501,6 +518,9 @@ static int mouse_try(char *path)
 			abs_max[i] = ab.maximum;
 		}
 	}
+	/* a pointer that types as well is read but left to the console */
+	if (mouse_bit(fd, EV_KEY, KEY_ENTER))
+		return fd;
 	/* claim the device so other readers (getty, gpm, libinput) stay out;
 	   EVIOCGRAB just treats a nonzero arg as "grab" */
 	if (ioctl(fd, EVIOCGRAB, 1) < 0)
@@ -528,9 +548,13 @@ static void mouse_open(void)
 	}
 	mfd = mouse_try(want);
 	if (mfd < 0 && !warned++)
-		fprintf(stderr, "nextfb: mouse: cannot open %s\n", want);
-	if (mfd < 0)
+		fprintf(stderr, mfd == -2 ?
+			"nextfb: mouse: %s is not a pointing device\n" :
+			"nextfb: mouse: cannot open %s\n", want);
+	if (mfd < 0) {
+		mfd = -1;
 		return;
+	}
 	/* start the software cursor at screen center */
 	mx = fb_cols() / 2;
 	my = fb_rows() / 2;
