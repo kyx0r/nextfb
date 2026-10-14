@@ -457,8 +457,7 @@ static void mouse_event(int type, int code, int value)
 		if (!msel_mode) {	/* plain char drag: end follows pointer */
 			sel_er = r;
 			sel_ec = c;
-		} else
-		if (r < sr || (r == sr && c < sc)) {
+		} else if (r < sr || (r == sr && c < sc)) {
 			sel_br = r;
 			sel_bc = c;
 			sel_er = er2;
