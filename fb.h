@@ -68,6 +68,8 @@ struct term {
 	int pid;			/* pid of the terminal program */
 	int top, bot;			/* terminal scrolling region */
 	int rows, cols;
+	int mrow, mcol;			/* the mouse pointer cell of this term */
+	int msel, msr, msc, mer, mec;	/* the mouse selection of this term */
 };
 
 void misc_save(struct term_state *state);

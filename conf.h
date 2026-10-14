@@ -19,11 +19,15 @@
 /* TERM variable for launched programs */
 #define TERM		"linux"
 
-
-/* mouse evdev device, e.g. "/dev/input/event24"; a bare name like
-   "event24" is taken from /dev/input.  The MOUSE environment variable
-   overrides this; an empty value with no MOUSE set disables the mouse. */
+/* mouse evdev device: a node path like "/dev/input/event24" or a bare
+   name taken from /dev/input such as "event24"; empty, the default, runs
+   fb without a mouse.  The MOUSE environment variable overrides it */
 #define MOUSE		""
+
+/* grab the console for the frame buffer with KDSETMODE(KD_GRAPHICS) so
+   fbcon stops drawing text into the memory fb paints; 0 keeps the old
+   text-mode behaviour where fbcon and fb share the same pixels */
+#define GRAPHIC_CONSOLE	1
 
 /* foreground and background colors */
 #define FGCOLOR		WHITE15

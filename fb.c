@@ -31,6 +31,7 @@
 #include <linux/input.h>
 #include <unistd.h>
 #include <linux/vt.h>
+#include <linux/kd.h>
 #include <linux/fb.h>
 #include <sys/mman.h>
 #include "fb.h"
@@ -65,6 +66,12 @@ static unsigned int passlen;
 static int cmdmode;			/* execute a command and exit */
 static int tagslisted;
 
+/* signals only set these flags and poke the pipe, the main loop does the
+   work: hiding and redrawing terminals is not async-signal-safe, and a
+   handler can land in the middle of the very drawing it would redo */
+static int sigpipe[2] = {-1, -1};
+static volatile sig_atomic_t sig_rel, sig_acq, sig_child, sig_quit;
+
 
 /* ---- mouse support ---- */
 
@@ -74,6 +81,7 @@ static int tagslisted;
 #define WHEEL_STEP	3
 
 static int mouse_bit(int fd, int type, int bit);
+static int mouse_try(char *path);
 
 static int mfd = -1;		/* current mouse input event device */
 static int mx, my;		/* software mouse cursor position (pixels) */
@@ -89,6 +97,7 @@ static int mark_on;		/* a left click has set a marker */
 static int mpend;		/* a left click awaits CLICK_REG_MS to mark */
 static int mark_r, mark_c;	/* marker cell */
 static int mmode;		/* 0 selection, 1 send mouse events */
+static int abs_min[2], abs_max[2];	/* absolute axis range, if reported */
 static char *yank_buf;	/* yank register; kept until the next selection */
 static int yank_all;	/* the register is selected text: paste every line of it */
 static int sel_br, sel_bc;	/* selection begin cell */
@@ -185,7 +194,7 @@ static void msel_line(int r)
 static void mpaste(void)
 {
 	char *s;
-	for (s = yank_buf; s && *s; s++)
+	for (s = yank_buf; s && *s && (yank_all || *s != 0x0a); s++)
 		term_send(*s);
 }
 
@@ -363,10 +372,16 @@ static void mouse_event(int type, int code, int value)
 		break;
 	case EV_ABS:
 		dirty = motion = 1;
-		if (code == ABS_X)
-			mx = LIMIT(value, 0, fb_cols() / 2 - 1);
-		else if (code == ABS_Y)
-			my = LIMIT(value, 0, fb_rows() / 2 - 1);
+		if (code == ABS_X || code == ABS_Y) {
+			int i = code == ABS_Y, w = (i ? fb_rows() : fb_cols()) - 1;
+			if (abs_max[i] > abs_min[i])
+				value = (int) ((long long) (value - abs_min[i]) * w /
+					(abs_max[i] - abs_min[i]));
+			if (i)
+				my = LIMIT(value, 0, w);
+			else
+				mx = LIMIT(value, 0, w);
+		}
 		break;
 	case EV_KEY:
 		if (code == BTN_LEFT) {
@@ -469,12 +484,23 @@ static int mouse_bit(int fd, int type, int bit)
 	return bit / 8 < (int) sizeof(bits) && (bits[bit / 8] & (1 << (bit % 8)));
 }
 
-/* open the event device named by the user and grab it */
+/* open the event device at path and grab it; a device that reports an
+   absolute axis also gives up the range that axis moves in */
 static int mouse_try(char *path)
 {
+	struct input_absinfo ab;
 	int fd = open(path, O_RDONLY | O_NONBLOCK);
+	int i;
 	if (fd < 0)
 		return -1;
+	for (i = 0; i < 2; i++) {
+		abs_min[i] = abs_max[i] = 0;
+		if (!ioctl(fd, EVIOCGABS(ABS_X + i), &ab) &&
+			ab.maximum > ab.minimum) {
+			abs_min[i] = ab.minimum;
+			abs_max[i] = ab.maximum;
+		}
+	}
 	/* claim the device so other readers (getty, gpm, libinput) stay out;
 	   EVIOCGRAB just treats a nonzero arg as "grab" */
 	if (ioctl(fd, EVIOCGRAB, 1) < 0)
@@ -482,9 +508,9 @@ static int mouse_try(char *path)
 	return fd;
 }
 
-
-/* open the pointing device named by the MOUSE env var or macro;
-   mouse support stays off when neither is set */
+/* the pointing device named by the MOUSE env var or macro: a node
+   path like "/dev/input/event24" or a bare name under MOUSE_DIR; empty,
+   the default, means there is no mouse */
 static void mouse_open(void)
 {
 	char *want = getenv("MOUSE");
@@ -492,20 +518,19 @@ static void mouse_open(void)
 	static int warned;
 	if (mfd >= 0)
 		return;
-	if (!want || !*want)
-		want = MOUSE[0] ? MOUSE : NULL;
 	if (!want)
+		want = MOUSE;
+	if (!*want)		/* an empty MOUSE variable turns the macro off too */
 		return;
 	if (*want != '/') {
 		snprintf(path, sizeof(path), "%s/%s", MOUSE_DIR, want);
 		want = path;
 	}
-	if ((mfd = mouse_try(want)) < 0) {
-		if (!warned++)
-			fprintf(stderr, "nextfb: mouse: cannot open %s\n",
-				want);
+	mfd = mouse_try(want);
+	if (mfd < 0 && !warned++)
+		fprintf(stderr, "nextfb: mouse: cannot open %s\n", want);
+	if (mfd < 0)
 		return;
-	}
 	/* start the software cursor at screen center */
 	mx = fb_cols() / 2;
 	my = fb_rows() / 2;
@@ -878,9 +903,10 @@ static void peepback(int termid)
 		t_hideshow(termid, 0, cterm(), !hidden);
 }
 
+static void sig_work(void);	/* defined below with the signal code */
 static int pollterms(void)
 {
-	struct pollfd ufds[NTERMS + 2];
+	struct pollfd ufds[NTERMS + 3];
 	int term_idx[NTERMS + 1];
 	int i;
 	int n = 1;
@@ -894,8 +920,9 @@ static int pollterms(void)
 		}
 	}
 
-	/* retry if the device failed or vanished; poll timeout paces this */
-	if (mfd < 0)
+	/* retry if the device failed or vanished; poll timeout paces this.
+	   The mouse is let go of while another console is on screen */
+	if (mfd < 0 && !hidden)
 		mouse_open();
 	int mi = -1;
 	if (mfd >= 0) {
@@ -903,16 +930,30 @@ static int pollterms(void)
 		ufds[n].events = POLLIN;
 		mi = n++;
 	}
+	/* the signal handler only pokes this pipe, the work is done here */
+	int si = -1;
+	if (sigpipe[0] >= 0) {
+		ufds[n].fd = sigpipe[0];
+		ufds[n].events = POLLIN;
+		si = n++;
+	}
 	int tmo = 1000;
 	if (mpend) {
 		tmo = (int) (mtime + CLICK_REG_MS - mnow());
 		if (tmo < 20)
 			tmo = 20;
 	}
-	if (poll(ufds, n, tmo) < 1) {
-		mouse_tick();
-		return 0;
+	if (poll(ufds, n, tmo) < 0)	/* a signal: nothing was reported */
+		for (i = 0; i < n; i++)
+			ufds[i].revents = 0;
+	if (si >= 0 && ufds[si].revents & POLLIN) {
+		char buf[64];
+		while (read(sigpipe[0], buf, sizeof(buf)) > 0)
+			;
 	}
+	sig_work();		/* goes by the flags, the pipe only wakes poll up */
+	mouse_tick();		/* a busy pty must not starve the marker */
+
 	if (ufds[0].revents & (POLLFLAGS & ~POLLIN))
 		return 1;
 	if (ufds[0].revents & POLLIN)
@@ -926,7 +967,7 @@ static int pollterms(void)
 		mouse_read();
 	for (i = 1; i < n; i++) {
 
-		if (i == mi)
+		if (i == mi || i == si)
 			continue;
 		if (ufds[i].revents & (POLLFLAGS & ~POLLIN))
 			continue;
@@ -965,29 +1006,77 @@ static void mainloop(char **args)
 	tcsetattr(0, 0, &oldtermios);
 }
 
-static void signalreceived(int n)
+/* KD_GRAPHICS keeps fbcon from drawing text into the pixels fb paints;
+   the mode is the console's and outlives the process, so every way out
+   has to put KD_TEXT back */
+static void console_text(void)
 {
+	if (GRAPHIC_CONSOLE)
+		ioctl(0, KDSETMODE, KD_TEXT);
+}
+
+static void console_graphics(void)
+{
+	if (GRAPHIC_CONSOLE)
+		ioctl(0, KDSETMODE, KD_GRAPHICS);
+}
+
+static void vt_acquire(void)
+{
+	console_graphics();
+	hidden = 0;
+	fb_cmap();
+	if (t_show(cterm(), 2) == 3 && split[ctag]) {
+		t_hideshow(cterm(), 0, aterm(cterm()), 3);
+		t_hideshow(aterm(cterm()), 0, cterm(), 1);
+	}
+}
+
+static void vt_release(void)
+{
+	if (hidden)		/* not on screen: nothing to give up */
+		return;
+	/* the pointer and the mouse go with the screen: the other console
+	   gets the device, and no click is taken for a terminal out of sight */
+	mclear();
+	if (mfd >= 0)
+		close(mfd);
+	mfd = -1;
+	mbprev = 0;
+	hidden = 1;
+	t_hide(cterm(), 1);
+	console_text();
+	/* refused when no switch is pending, a stray signal: fb is still
+	   the one on screen, so take it back instead of staying blind */
+	if (ioctl(0, VT_RELDISP, 1) < 0)
+		vt_acquire();
+}
+
+static void sig_work(void)
+{
+	if (sig_quit)
+		exitit = 1;
 	if (exitit)
 		return;
-	switch (n) {
-	case SIGUSR1:
-		hidden = 1;
-		t_hide(cterm(), 1);
-		ioctl(0, VT_RELDISP, 1);
-		break;
-	case SIGUSR2:
-		hidden = 0;
-		fb_cmap();
-		if (t_show(cterm(), 2) == 3 && split[ctag]) {
-			t_hideshow(cterm(), 0, aterm(cterm()), 3);
-			t_hideshow(aterm(cterm()), 0, cterm(), 1);
-		}
-		break;
-	case SIGCHLD:;
+	/* the kernel sends no acquire until a release is answered, and that
+	   is done here; both flags set can only be a switch back followed by
+	   a switch away, so the acquire goes first */
+	if (sig_acq) {
+		sig_acq = 0;
+		vt_acquire();
+	}
+	if (sig_rel) {
+		sig_rel = 0;
+		vt_release();
+	}
+	if (sig_child) {
 		int pid, i;
+		sig_child = 0;
 		while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
-			if (terms[cterm()]->pid == pid)
+			if (terms[cterm()]->pid == pid) {
+				mclear();	/* what was selected is gone */
 				term_end();
+			}
 			for (i = 0; i < NTERMS; i++) {
 				if (terms[i] && terms[i]->pid == pid) {
 					terms[i]->fd = 0;
@@ -999,22 +1088,78 @@ static void signalreceived(int n)
 		}
 		if (cmdmode)
 			exitit = 1;
-		break;
 	}
+}
+
+/* async-signal-safe: set a flag, wake the main loop up through the pipe */
+static void signalreceived(int n)
+{
+	int err = errno;
+	if (n == SIGUSR1)
+		sig_rel = 1;
+	else if (n == SIGUSR2)
+		sig_acq = 1;
+	else if (n == SIGCHLD)
+		sig_child = 1;
+	else
+		sig_quit = 1;
+	if (sigpipe[1] >= 0)
+		while (write(sigpipe[1], "", 1) < 0 && errno == EINTR)
+			;
+	errno = err;
+}
+
+/* a crash must not leave the console in graphics mode; the handler is
+   one-shot, so the signal raised again takes its default course */
+static void sig_fatal(int n)
+{
+	console_text();
+	raise(n);
+}
+
+/* sigaction() and not signal(): built with -std=c99, glibc's signal() is
+   the System V one, which uninstalls the handler on its first delivery,
+   so the second console switch would kill fb */
+static void sig_on(int n, void (*fn)(int), int flags)
+{
+	struct sigaction sa;
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = fn;
+	sa.sa_flags = flags;
+	sigemptyset(&sa.sa_mask);
+	sigaction(n, &sa, NULL);
 }
 
 static void signalsetup(void)
 {
+	static int quit[] = {SIGTERM, SIGHUP, SIGINT};
+	static int fatal[] = {SIGSEGV, SIGBUS, SIGFPE, SIGILL, SIGABRT, SIGQUIT};
 	struct vt_mode vtm;
+	unsigned int i;
+	if (pipe(sigpipe) == 0) {
+		fcntl(sigpipe[0], F_SETFL, O_NONBLOCK);
+		fcntl(sigpipe[1], F_SETFL, O_NONBLOCK);
+		fcntl(sigpipe[0], F_SETFD, FD_CLOEXEC);
+		fcntl(sigpipe[1], F_SETFD, FD_CLOEXEC);
+	} else {
+		sigpipe[0] = sigpipe[1] = -1;
+	}
+	sig_on(SIGUSR1, signalreceived, SA_RESTART);
+	sig_on(SIGUSR2, signalreceived, SA_RESTART);
+	sig_on(SIGCHLD, signalreceived, SA_RESTART | SA_NOCLDSTOP);
+	for (i = 0; i < LEN(quit); i++)
+		sig_on(quit[i], signalreceived, SA_RESTART);
+	for (i = 0; i < LEN(fatal); i++)
+		sig_on(fatal[i], sig_fatal, SA_RESETHAND);
 	vtm.mode = VT_PROCESS;
 	vtm.waitv = 0;
 	vtm.relsig = SIGUSR1;
 	vtm.acqsig = SIGUSR2;
 	vtm.frsig = 0;
-	signal(SIGUSR1, signalreceived);
-	signal(SIGUSR2, signalreceived);
-	signal(SIGCHLD, signalreceived);
-	ioctl(0, VT_SETMODE, &vtm);
+	if (ioctl(0, VT_SETMODE, &vtm) < 0)
+		fprintf(stderr,
+			"fb: cannot take over the virtual console, run it"
+			" on the terminal it owns\n");
 }
 
 int main(int argc, char **argv)
@@ -1034,10 +1179,12 @@ int main(int argc, char **argv)
 	terms[0] = term_make();
 	write(1, hide, strlen(hide));
 	signalsetup();
+	console_graphics();
 	fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
 	while (args[0] && args[0][0] == '-')
 		args++;
 	mainloop(args[0] ? args : NULL);
+	console_text();
 	write(1, show, strlen(show));
 	for (i = 0; i < NTERMS; i++)
 		term_free(terms[i]);

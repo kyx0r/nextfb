@@ -212,6 +212,8 @@ static void term_mouse(int r, int c, int sel, int br, int bc, int er, int ec)
 			ns1 = MIN(ns1, os1); ns2 = MAX(ns2, os2);
 		}
 	}
+	if (!visible)		/* the state is kept, the screen is not ours */
+		return;
 	if (term->hpos) {	/* the history is on show: repaint it all */
 		if (same && r == or1)
 			return;
@@ -317,6 +319,10 @@ static void term_zero(struct term *term)
 	term->bot = 0;
 	term->rows = 0;
 	term->cols = 0;
+	term->mrow = -1;
+	term->mcol = 0;
+	term->msel = 0;
+	term->msr = term->msc = term->mer = term->mec = 0;
 }
 
 struct term *term_make(void)
@@ -517,6 +523,11 @@ void term_save(struct term *term)
 	term->top = top;
 	term->bot = bot;
 	term->lazy = lazy;
+	/* the pointer and the selection belong to their terminal: another
+	   one drawn meanwhile, the other half of a split, must not show them */
+	term->mrow = mrow; term->mcol = mcol;
+	term->msel = msel;
+	term->msr = msr; term->msc = msc; term->mer = mer; term->mec = mec;
 }
 
 static void resizeupdate(int or, int oc, int nr,  int nc)
@@ -570,11 +581,15 @@ void term_load(struct term *t, int flags)
 	screen = term->screen;
 	fgs = term->fgs;
 	bgs = term->bgs;
+	dirty = term->dirty;
 	visible = flags;
 	top = term->top;
 	bot = term->bot;
 	lazy = term->lazy;
-	dirty = term->dirty;
+	mrow = term->mrow; mcol = term->mcol;
+	msel = term->msel;
+	msr = term->msr; msc = term->msc;
+	mer = term->mer; mec = term->mec;
 }
 
 void term_end(void)

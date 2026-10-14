@@ -87,12 +87,14 @@ lands in the yank register right away (search and yank commands ^Qy, ^Qb,
 The register is shared by every terminal and tag until a new selection
 replaces it.
 
-The mouse is used only if named: the MOUSE macro in conf.h or the MOUSE
-environment variable, which takes precedence; a bare name such as "event24"
-gets /dev/input prepended.  With neither set there is no mouse.  A device
-that cannot be opened warns once and is reopened when it appears.  Nextfb
-grabs the evdev device, so gpm, X, or "libinput debug-events" see nothing
-while it runs.  REL_HWHEEL is used when the device has no REL_WHEEL.
+The mouse device comes from the MOUSE macro in conf.h or the MOUSE
+environment variable, which takes precedence: a node path such as
+"/dev/input/event24" or a bare name such as "event24" under /dev/input.
+An empty value, the default, runs Nextfb without a mouse.  A device that
+cannot be opened warns once and is reopened when it appears.  Nextfb grabs
+the evdev device, so gpm, X, or "libinput debug-events" see nothing while
+it is on screen; the grab is dropped while another virtual console is
+shown.  REL_HWHEEL is used when the device has no REL_WHEEL.
 
 The selection is drawn as inverted cells on the focused grid; the
 pointer is marked with a bar at the bottom of its cell, in the color

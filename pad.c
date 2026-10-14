@@ -142,15 +142,26 @@ static char *ch2fb(int fn, int c, int fg, int bg)
 	return fbbits;
 }
 
+/* r and c are relative to the pad and may lie outside it, pad_border
+   draws around it; what must hold is the frame buffer, so clip to that */
 static void fb_set(int r, int c, void *mem, int len)
 {
-	memcpy(fb_mem(pstate->fbroff + r) + (pstate->fbcoff + c) * pstate->bpp, mem, len * pstate->bpp);
+	int y = pstate->fbroff + r;
+	int x = pstate->fbcoff + c;
+	int n = MIN(len, fb_cols() - x);
+	if (y < 0 || y >= fb_rows() || x < 0 || n <= 0)
+		return;
+	memcpy(fb_mem(y) + x * pstate->bpp, mem, n * pstate->bpp);
 }
 
 static void fb_box(int sr, int er, int sc, int ec, unsigned val)
 {
 	int i, k;
 	char *p = gc_row;
+	sc = MAX(sc, -pstate->fbcoff);
+	ec = MIN(ec, fb_cols() - pstate->fbcoff);
+	if (ec <= sc || (ec - sc) * pstate->bpp > (int) sizeof(gc_row))
+		return;
 	for (i = 0; i < ec - sc; i++)
 		for (k = 0; k < pstate->bpp; k++)	/* little-endian */
 			*p++ = (val >> (k * 8)) & 0xff;
