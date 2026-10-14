@@ -142,26 +142,15 @@ static char *ch2fb(int fn, int c, int fg, int bg)
 	return fbbits;
 }
 
-/* r and c are relative to the pad and may lie outside it, pad_border
-   draws around it; what must hold is the frame buffer, so clip to that */
 static void fb_set(int r, int c, void *mem, int len)
 {
-	int y = pstate->fbroff + r;
-	int x = pstate->fbcoff + c;
-	int n = MIN(len, fb_cols() - x);
-	if (y < 0 || y >= fb_rows() || x < 0 || n <= 0)
-		return;
-	memcpy(fb_mem(y) + x * pstate->bpp, mem, n * pstate->bpp);
+	memcpy(fb_mem(pstate->fbroff + r) + (pstate->fbcoff + c) * pstate->bpp, mem, len * pstate->bpp);
 }
 
 static void fb_box(int sr, int er, int sc, int ec, unsigned val)
 {
 	int i, k;
 	char *p = gc_row;
-	sc = MAX(sc, -pstate->fbcoff);
-	ec = MIN(ec, fb_cols() - pstate->fbcoff);
-	if (ec <= sc || (ec - sc) * pstate->bpp > (int) sizeof(gc_row))
-		return;
 	for (i = 0; i < ec - sc; i++)
 		for (k = 0; k < pstate->bpp; k++)	/* little-endian */
 			*p++ = (val >> (k * 8)) & 0xff;
@@ -210,14 +199,6 @@ void pad_fill(int sr, int er, int sc, int ec, int c)
 	int fber = er >= 0 ? er * pstate->fnrows : pstate->fbrows;
 	int fbec = ec >= 0 ? ec * pstate->fncols : pstate->fbcols;
 	fb_box(sr * pstate->fnrows, fber, sc * pstate->fncols, fbec, color2fb(c & FN_C));
-}
-
-/* pointer marker: the bottom pixel row of one cell */
-void pad_mark(int r, int c, int color)
-{
-	int er = (r + 1) * pstate->fnrows;
-	fb_box(er - 1, er, c * pstate->fncols, (c + 1) * pstate->fncols,
-		color2fb(color & FN_C));
 }
 
 char *pad_fbdev(void)

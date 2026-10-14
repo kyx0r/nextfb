@@ -42,70 +42,17 @@ m-n		completes the input till first suggestion
 m-u		delete all input
 ==============	=======================================
 
+To execute only a single program in Nextfb, the program and its
+arguments should be passed as command line arguments of Nextfb. Nextfb
+executes the specified program in a terminal, disables all terminal
+switching commands, and exits as soon as the program finishes.
 
-MOUSE
-=====
-
-Once you name a pointing device (see below), Nextfb reads it directly
-through the evdev interface and maps button presses to the
-terminal grid of the focused terminal.  The following mouse operations
-are supported:
-
-==============	=======================================
-OPERATION	COMMAND
-==============	=======================================
-left click	mark a cell; a second click selects the region
-left drag	drag into the next cell to select a range
-right button	clear marker and selection; if none, send mode
-middle button	paste the yank register into the terminal
-wheel		scroll the focused terminal up/down
-double click	select the word under the pointer
-triple click	select the line under the pointer
-any key		hide the cursor and drop the selection
-==============	=======================================
-
-Clicks are told apart by time and by the cell they land on: clicks on
-the same cell closer together than 400 ms merge into a double or a
-triple click and pick a word or a line, while a lone click registers as
-a marker only after 1 s goes by with no second click.  Two such single
-clicks form a region from the marker to the second cell and the next
-click starts a new marker there instead of growing the region.  A marker
-is an anchor, so it keeps a cell of its own and the pointer cursor goes
-on following the mouse while it is shown.  Holding the button down, a
-press with no release event seen yet, drags out the selection, but only
-once the pointer has crossed out of the cell the button went down in:
-motion inside that cell is mouse jitter and leaves the pending marker
-alone.  A right button click clears the marker, the selection and the
-cursor without touching the yank register; with nothing to clear it
-switches the mouse into send mode, where button clicks and the wheel
-go to the foreground terminal program as xterm SGR mouse escape
-sequences.  That mode persists until a right button click brings back
-the default terminal selection mode.  The
-selected text is taken from the visible screen, scrolled history included,
-lands in the yank register right away (search and yank commands ^Qy, ^Qb,
-^Qv), and is pasted into the focused terminal on a middle button press.
-The register is shared by every terminal and tag until a new selection
-replaces it.
-
-The mouse device comes from the MOUSE macro in conf.h or the MOUSE
-environment variable, which takes precedence: a node path such as
-"/dev/input/event24" or a bare name such as "event24" under /dev/input.
-An empty value, the default, runs Nextfb without a mouse.  A device that
-cannot be opened warns once and is reopened when it appears.  Nextfb grabs
-the evdev device, so gpm, X, or "libinput debug-events" see nothing while
-it is on screen; the grab is dropped while another virtual console is
-shown.  REL_HWHEEL is used when the device has no REL_WHEEL.
-
-The selection is drawn as inverted cells on the focused grid; the
-pointer is marked with a bar at the bottom of its cell, in the color
-the cell draws, so it stays visible even on the application cursor or
-on selected text.  The pointer starts at the screen center until the
-mouse moves.
-
-A program given as a Nextfb argument runs alone in a terminal, terminal
-switching is disabled, and Nextfb exits when the program finishes.
-Nextfb also sets FBDEV ("<fb>:<WxH>+<x>+<y>") for the programs it runs, so
-fbpdf, fbvnc, and fbff are limited to their terminal's framebuffer region.
+Programs like fbpdf, fbvnc, and fbff read the FBDEV environment
+variable, which can specify the framebuffer device and its drawing
+region, like "/dev/fb0:1438x448+1+451".  Nextfb defines this
+environment variable when executing a program, so that if a tag is
+split, the program running in its terminal is limited to its
+corresponding framebuffer region.
 
 SETTING UP
 ==========
@@ -163,3 +110,19 @@ the vimrc file should enable them:
 
   set t_ZH=[3m
   set t_Co=256
+
+
+PATCHES
+=======
+
+Optional features live outside the core as patch2vi scripts.  They edit
+the sources through nextvi's ex mode; VI names the editor (default vi),
+which must be nextvi.  Apply one to a clean tree, then build:
+
+  $ ./mouse.sh && ./build.sh
+
+==============	=======================================
+PATCH		FEATURE
+==============	=======================================
+mouse.sh	evdev mouse: selection, paste, wheel scroll
+==============	=======================================

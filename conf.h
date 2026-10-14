@@ -19,11 +19,6 @@
 /* TERM variable for launched programs */
 #define TERM		"linux"
 
-/* mouse evdev device: a node path like "/dev/input/event24" or a bare
-   name taken from /dev/input such as "event24"; empty, the default, runs
-   fb without a mouse.  The MOUSE environment variable overrides it */
-#define MOUSE		""
-
 /* grab the console for the frame buffer with KDSETMODE(KD_GRAPHICS) so
    fbcon stops drawing text into the memory fb paints; 0 keeps the old
    text-mode behaviour where fbcon and fb share the same pixels */

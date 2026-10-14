@@ -42,7 +42,6 @@ void pad_free(struct pad_state *state);
 void pad_conf(int row, int col, int rows, int cols);
 void pad_put(int ch, int r, int c, int fg, int bg);
 void pad_fill(int sr, int er, int sc, int ec, int c);
-void pad_mark(int r, int c, int color);
 void pad_border(unsigned c, int wid);
 char *pad_fbdev(void);
 
@@ -68,8 +67,6 @@ struct term {
 	int pid;			/* pid of the terminal program */
 	int top, bot;			/* terminal scrolling region */
 	int rows, cols;
-	int mrow, mcol;			/* the mouse pointer cell of this term */
-	int msel, msr, msc, mer, mec;	/* the mouse selection of this term */
 };
 
 void misc_save(struct term_state *state);

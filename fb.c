@@ -27,8 +27,6 @@
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <termios.h>
-#include <time.h>
-#include <linux/input.h>
 #include <unistd.h>
 #include <linux/vt.h>
 #include <linux/kd.h>
@@ -36,7 +34,6 @@
 #include <sys/mman.h>
 #include "fb.h"
 #include "conf.h"
-
 #include "font.c"
 #include "term.c"
 #include "pad.c"
@@ -71,516 +68,6 @@ static int tagslisted;
    handler can land in the middle of the very drawing it would redo */
 static int sigpipe[2] = {-1, -1};
 static volatile sig_atomic_t sig_rel, sig_acq, sig_child, sig_quit;
-
-
-/* ---- mouse support ---- */
-
-#define DOUBLE_MS	400	/* same-cell clicks closer than this merge */
-#define CLICK_REG_MS	1000	/* a lone click registers only after this */
-#define MOUSE_DIR	"/dev/input"
-#define WHEEL_STEP	3
-
-static int mouse_bit(int fd, int type, int bit);
-static int mouse_try(char *path);
-
-static int mfd = -1;		/* current mouse input event device */
-static int mx, my;		/* software mouse cursor position (pixels) */
-static int mbprev;		/* previously pressed mouse buttons */
-static long long mtime;		/* time of the last button press (ms) */
-static int mlast_r, mlast_c;	/* cell of the previous click */
-static int mpress_r, mpress_c;	/* cell the left button went down in */
-static int mdrag;		/* the held left button left that cell */
-static int msel_mode;		/* selection anchor: 0 cell 1 word 2 line */
-static int mclick;		/* consecutive click count on same cell */
-static int sel_on;		/* a mouse selection is active */
-static int mark_on;		/* a left click has set a marker */
-static int mpend;		/* a left click awaits CLICK_REG_MS to mark */
-static int mark_r, mark_c;	/* marker cell */
-static int mmode;		/* 0 selection, 1 send mouse events */
-static int abs_min[2], abs_max[2];	/* absolute axis range, if reported */
-static char *yank_buf;	/* yank register; kept until the next selection */
-static int yank_all;	/* the register is selected text: paste every line of it */
-static int sel_br, sel_bc;	/* selection begin cell */
-static int sel_er, sel_ec;	/* selection end cell */
-
-static long long mnow(void)
-{
-	struct timespec ts;
-	if (clock_gettime(CLOCK_MONOTONIC, &ts))
-		return 0;
-	return (long long) ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-}
-
-static int mcell_r(void)
-{
-	return LIMIT((my - pstate->fbroff) / pad_crows(), 0, pad_rows() - 1);
-}
-
-static int mcell_c(void)
-{
-	return LIMIT((mx - pstate->fbcoff) / pad_ccols(), 0, pad_cols() - 1);
-}
-
-static int mword(int c)
-{
-	return c > ' ' && !(c & DWCHAR) ? 1 : 0;
-}
-
-/* assemble the text between two visible cells into a malloc'd string */
-static char *mtext(int br, int bc, int er, int ec)
-{
-
-	if (br > er || (br == er && bc > ec)) {
-		int t;
-		t = br; br = er; er = t;
-		t = bc; bc = ec; ec = t;
-	}
-	/* a selection made before a resize can reach past the current grid;
-	   clamp it so the cell count cannot outrun the buffer sized below */
-	br = LIMIT(br, 0, pad_rows() - 1);
-	er = LIMIT(er, 0, pad_rows() - 1);
-	bc = LIMIT(bc, 0, pad_cols() - 1);
-	ec = LIMIT(ec, 0, pad_cols() - 1);
-	int r, c, n = pad_cols() * 5;
-	char *buf = malloc((er - br + 1) * n + 1);
-	char *s = buf;
-	if (!buf)
-		return NULL;
-
-	for (r = br; r <= er; r++) {
-		int cb = r == br ? bc : 0;
-		int ce = r == er ? ec : pad_cols() - 1;
-		for (c = cb; c <= ce; c++) {
-			int ch = term_getchar(r, c);
-			if (~ch & DWCHAR)
-				s += writeutf8(s, ch);
-		}
-		if (r != er)
-			*s++ = '\n';
-	}
-	*s = '\0';
-	return buf;
-}
-
-static void msel_word(int r, int c)
-{
-	int l, rt;
-	if (!mword(term_getchar(r, c))) {
-		sel_br = sel_er = r;
-		sel_bc = sel_ec = c;
-		sel_on = 1;
-		return;
-	}
-	for (l = c; l > 0 && mword(term_getchar(r, l - 1)); l--)
-		;
-	for (rt = c; rt < pad_cols() - 1 && mword(term_getchar(r, rt + 1)); rt++)
-		;
-	sel_br = sel_er = r;
-	sel_bc = l;
-	sel_ec = rt;
-	sel_on = 1;
-}
-
-static void msel_line(int r)
-{
-	sel_br = sel_er = r;
-	sel_bc = 0;
-	sel_ec = pad_cols() - 1;
-	sel_on = 1;
-}
-
-/* middle button: insert the yank register; it outlives the selection
-   and any keystroke, and is only replaced by a new selection */
-static void mpaste(void)
-{
-	char *s;
-	for (s = yank_buf; s && *s && (yank_all || *s != 0x0a); s++)
-		term_send(*s);
-}
-
-static void mclick_ev(int r, int c)
-{
-	long long now = mnow();
-	if (r == mlast_r && c == mlast_c && now - mtime < DOUBLE_MS)
-		mclick++;
-	else
-		mclick = 1;
-	mtime = now;
-	mlast_r = mpress_r = r;
-	mlast_c = mpress_c = c;
-	mdrag = 0;
-	msel_mode = mclick >= 3 ? 2 : mclick == 2 ? 1 : 0;
-	if (mclick >= 3) {
-		msel_line(r);
-		mark_on = mpend = 0;
-	} else if (mclick == 2) {
-		msel_word(r, c);
-		mark_on = mpend = 0;
-	} else if (mark_on) {
-		sel_br = mark_r;
-		sel_bc = mark_c;
-		sel_er = r;
-		sel_ec = c;
-		sel_on = 1;
-		msel_mode = 0;
-		mark_on = 0;
-		mclick = 0;	/* the region is complete: the next click is a
-				   fresh first click that re-anchors it */
-	} else {
-		/* the first click only parks the pending marker; it becomes a
-		   real marker in mouse_tick() once CLICK_REG ms go by with no
-		   further click, so double and triple clicks stay clean */
-		mpend = 1;
-		mark_r = r;
-		mark_c = c;
-		mtime = now;
-		sel_br = sel_er = r;
-		sel_bc = sel_ec = c;
-		sel_on = 0;
-	}
-}
-
-/* what lands in the register is echoed back into the terminal when it is
-   pasted, so keep only text that could be typed: no control bytes (they
-   would inject escape sequences) and no fullwidth cell halves */
-static void yank_sanitize(char *s)
-{
-	char *r = s, *w = s;
-	while (*r) {
-		unsigned char c = *r++;
-		if (c == '\n' || c == '\t' || c >= 0x80 || isprint(c))
-			*w++ = c;
-	}
-	*w = '\0';
-}
-
-/* take ownership of s as the new yank register; an empty s after
-   sanitizing leaves the previous register alone */
-static void yank_set(char *s, int all)
-{
-	if (!s)
-		return;
-	yank_sanitize(s);
-	if (!*s) {
-		free(s);
-		return;
-	}
-	free(yank_buf);
-	yank_buf = s;
-	yank_all = all;
-}
-
-/* put the selection text in the yank register immediately; drop trailing
-   blanks since the selection usually reaches the end of a line */
-static void msel_yank(void)
-{
-	char *s;
-	int e;
-	if (!sel_on)
-		return;
-	s = mtext(sel_br, sel_bc, sel_er, sel_ec);
-	if (!s)
-		return;
-	e = (int)strlen(s);
-	while (e && (s[e - 1] == ' ' || s[e - 1] == '\n'))
-		s[--e] = '\0';
-	yank_set(s, 1);
-}
-
-/* hand the current cursor cell and selection to the term layer; the
-   yank register is refreshed only when the selection itself changed */
-static void mouse_refresh(int yank)
-{
-	int br = sel_br, bc = sel_bc, er = sel_er, ec = sel_ec, t;
-	if (sel_on && (br > er || (br == er && bc > ec))) {
-		t = br; br = er; er = t;
-		t = bc; bc = ec; ec = t;
-	}
-	if ((mark_on || mpend) && !sel_on) {
-		/* the block cursor is the pointer and must keep following it;
-		   a marker is only an anchor, so it takes a cell of its own in
-		   the region slots instead of holding the cursor still on
-		   itself, which is what froze the pointer display */
-		br = er = mark_r;
-		bc = ec = mark_c;
-		term_mouse(mcell_r(), mcell_c(), 1, br, bc, er, ec);
-	} else {
-		term_mouse(mcell_r(), mcell_c(), sel_on, br, bc, er, ec);
-	}
-	if (yank)
-		msel_yank();
-}
-
-static void mclear(void)
-{
-	if (mrow < 0 && !sel_on && !mark_on && !mpend)
-		return;
-	mark_on = 0;
-	mpend = 0;
-	mclick = 0;
-	mdrag = 0;
-	msel_mode = 0;
-	sel_on = 0;
-	term_mouse(-1, 0, 0, 0, 0, 0, 0);
-}
-
-static void msendmouse(int button, int r, int c, int press)
-{
-	char buf[64];
-	snprintf(buf, sizeof(buf), "\033[<%d;%d;%d%c",
-		button, c + 1, r + 1, press ? 'M' : 'm');
-	term_sendstr(buf);
-}
-
-/* a lone left click turns into a marker only after CLICK_REG_MS passes
-   with no second click; pollterms() runs this every poll cycle */
-static void mouse_tick(void)
-{
-	if (!mpend || mmode || mnow() - mtime < CLICK_REG_MS)
-		return;
-	mpend = 0;
-	mark_on = 1;
-	mclick = 1;
-	msel_mode = 0;
-	mouse_refresh(0);
-}
-
-static void mouse_event(int type, int code, int value)
-{
-	int r = mcell_r(), c = mcell_c();
-	int orow = mrow, ocol = mcol, dirty = 0, selup = 0, motion = 0;
-	switch (type) {
-	case EV_REL:
-		if (code == REL_X || code == REL_Y) {
-			dirty = motion = 1;
-			if (code == REL_X)
-				mx = LIMIT(mx + value, 0, fb_cols() - 1);
-			else
-				my = LIMIT(my + value, 0, fb_rows() - 1);
-		} else if (code == REL_WHEEL || code == REL_WHEEL_HI_RES ||
-			(code == REL_HWHEEL && !mouse_bit(mfd, EV_REL, REL_WHEEL))) {
-			if (mmode) {
-				if (value) {
-					int button = value > 0 ? 64 : 65;
-					msendmouse(button, r, c, 1);
-					msendmouse(button, r, c, 0);
-				}
-			} else {
-				term_scrl(value > 0 ? WHEEL_STEP : -WHEEL_STEP);
-			}
-		}
-		break;
-	case EV_ABS:
-		dirty = motion = 1;
-		if (code == ABS_X || code == ABS_Y) {
-			int i = code == ABS_Y, w = (i ? fb_rows() : fb_cols()) - 1;
-			if (abs_max[i] > abs_min[i])
-				value = (int) ((long long) (value - abs_min[i]) * w /
-					(abs_max[i] - abs_min[i]));
-			if (i)
-				my = LIMIT(value, 0, w);
-			else
-				mx = LIMIT(value, 0, w);
-		}
-		break;
-	case EV_KEY:
-		if (code == BTN_LEFT) {
-			if (value && !(mbprev & 1)) {
-				if (mmode) {
-					msendmouse(0, r, c, 1);
-					msendmouse(0, r, c, 0);
-				} else {
-					mclick_ev(r, c);
-				}
-			}
-			mbprev = value ? mbprev | 1 : mbprev & ~1;
-			dirty = selup = 1;
-		} else if (code == BTN_RIGHT) {
-			if (value && !(mbprev & 2)) {
-				if (mmode) {
-					mmode = 0;	/* a right click leaves send mode */
-				} else if (sel_on || mark_on || mpend) {
-					mbprev = mbprev | 2;
-					mclear();
-					return;
-				} else {
-					mmode = 1;
-					mpend = 0;
-					mclick = 0;
-				}
-			}
-			mbprev = value ? mbprev | 2 : mbprev & ~2;
-			dirty = 0;
-			selup = 0;
-		} else if (code == BTN_MIDDLE) {
-			if (value && !(mbprev & 4)) {
-				if (mmode) {
-					msendmouse(2, r, c, 1);
-					msendmouse(2, r, c, 0);
-				} else {
-					mpaste();
-				}
-			}
-			mbprev = value ? mbprev | 4 : mbprev & ~4;
-			dirty = 1;
-		}
-		break;
-	}
-	if (type == EV_KEY && value)
-		dirty = 2;	/* a click repaints at once, no motion needed */
-
-	/* r and c above were read before this event moved the pointer: a
-	   motion event judged on the cell it is leaving looks like no change
-	   and is dropped, so take the cell the pointer is in now */
-	if (motion) {
-		r = mcell_r();
-		c = mcell_c();
-	}
-
-	/* a drag is the left button still held down, the release event is
-	   what clears that bit, that has left the cell the press landed in;
-	   movement still inside that cell is jitter and must leave the
-	   pending click for mouse_tick() to promote. mdrag latches it so
-	   tracking continues when the pointer comes back over the press
-	   cell, and cells inside a word or line picked by double or triple
-	   click must not shrink */
-	if ((mbprev & 1) && motion && !mmode &&
-		(mdrag || r != mpress_r || c != mpress_c)) {
-		int sr = sel_br, sc = sel_bc, er2 = sel_er, ec2 = sel_ec, t;
-		mdrag = 1;
-		sel_on = 1;
-		mark_on = mpend = 0;
-		if (sr > er2 || (sr == er2 && sc > ec2)) {
-			t = sr; sr = er2; er2 = t;
-			t = sc; sc = ec2; ec2 = t;
-		}
-		if (!msel_mode) {	/* plain char drag: end follows pointer */
-			sel_er = r;
-			sel_ec = c;
-		} else if (r < sr || (r == sr && c < sc)) {
-			sel_br = r;
-			sel_bc = c;
-			sel_er = er2;
-			sel_ec = ec2;
-		} else if (r > er2 || (r == er2 && c > ec2)) {
-			sel_br = sr;
-			sel_bc = sc;
-			sel_er = r;
-			sel_ec = c;
-		}
-		dirty = selup = 1;
-	}
-	if (dirty && (r != orow || c != ocol || dirty > 1))
-		mouse_refresh(selup);
-}
-
-
-static int mouse_bit(int fd, int type, int bit)
-{
-	unsigned char bits[128] = {0};
-	if (ioctl(fd, EVIOCGBIT(type, sizeof(bits)), bits) < 0)
-		return 0;
-	return bit / 8 < (int) sizeof(bits) && (bits[bit / 8] & (1 << (bit % 8)));
-}
-
-/* a pointing device has a left button and an X and a Y axis */
-static int mouse_is(int fd)
-{
-	if (!mouse_bit(fd, EV_KEY, BTN_LEFT))
-		return 0;
-	return (mouse_bit(fd, EV_REL, REL_X) && mouse_bit(fd, EV_REL, REL_Y)) ||
-		(mouse_bit(fd, EV_ABS, ABS_X) && mouse_bit(fd, EV_ABS, ABS_Y));
-}
-
-/* open the event device at path and grab it; a device that reports an
-   absolute axis also gives up the range that axis moves in.  Returns
-   -1 if it cannot be opened and -2 if it is not a pointing device */
-static int mouse_try(char *path)
-{
-	struct input_absinfo ab;
-	/* close-on-exec: the grab lives in the open file, and a terminal
-	   program that inherits it keeps the grab after fb has let go */
-	int fd = open(path, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
-	int i;
-	if (fd < 0)
-		return -1;
-	/* a grab takes the device away from every other reader, the console
-	   keyboard included: a keyboard named by mistake would leave no way
-	   to type, switch consoles or quit, so only a pointer is accepted */
-	if (!mouse_is(fd)) {
-		close(fd);
-		return -2;
-	}
-	for (i = 0; i < 2; i++) {
-		abs_min[i] = abs_max[i] = 0;
-		if (!ioctl(fd, EVIOCGABS(ABS_X + i), &ab) &&
-			ab.maximum > ab.minimum) {
-			abs_min[i] = ab.minimum;
-			abs_max[i] = ab.maximum;
-		}
-	}
-	/* a pointer that types as well is read but left to the console */
-	if (mouse_bit(fd, EV_KEY, KEY_ENTER))
-		return fd;
-	/* claim the device so other readers (getty, gpm, libinput) stay out;
-	   EVIOCGRAB just treats a nonzero arg as "grab" */
-	if (ioctl(fd, EVIOCGRAB, 1) < 0)
-		fprintf(stderr, "nextfb: mouse: cannot grab %s\n", path);
-	return fd;
-}
-
-/* the pointing device named by the MOUSE env var or macro: a node
-   path like "/dev/input/event24" or a bare name under MOUSE_DIR; empty,
-   the default, means there is no mouse */
-static void mouse_open(void)
-{
-	char *want = getenv("MOUSE");
-	char path[512];
-	static int warned;
-	if (mfd >= 0)
-		return;
-	if (!want)
-		want = MOUSE;
-	if (!*want)		/* an empty MOUSE variable turns the macro off too */
-		return;
-	if (*want != '/') {
-		snprintf(path, sizeof(path), "%s/%s", MOUSE_DIR, want);
-		want = path;
-	}
-	mfd = mouse_try(want);
-	if (mfd < 0 && !warned++)
-		fprintf(stderr, mfd == -2 ?
-			"nextfb: mouse: %s is not a pointing device\n" :
-			"nextfb: mouse: cannot open %s\n", want);
-	if (mfd < 0) {
-		mfd = -1;
-		return;
-	}
-	/* start the software cursor at screen center */
-	mx = fb_cols() / 2;
-	my = fb_rows() / 2;
-	mrow = mcell_r();
-	mcol = mcell_c();
-}
-
-/* let go of the device; the grab is dropped by name and not left to
-   close(), which only drops it with the last reference to the file */
-static void mouse_close(void)
-{
-	if (mfd < 0)
-		return;
-	ioctl(mfd, EVIOCGRAB, 0);
-	close(mfd);
-	mfd = -1;
-	mbprev = 0;
-}
-
-static void mouse_read(void)
-{
-	struct input_event ev;
-	while (read(mfd, &ev, sizeof(ev)) == (int) sizeof(ev))
-		mouse_event(ev.type, ev.code, ev.value);
-}
 
 static int readchar(void)
 {
@@ -770,14 +257,11 @@ static void directkey(void)
 {
 	static int yank;
 	static char *input_buf;
+	static char *yank_buf;
 	static int input_len;
 	static int input_sz;
 	char *s;
 	int c = readchar();
-	/* any keystroke clears the mouse cursor, marker and selection */
-	if (mrow >= 0 || sel_on || mark_on) {
-		mclear();
-	}
 	if (tagslisted) {
 		term_redraw(1);
 		tagslisted = 0;
@@ -833,11 +317,9 @@ static void directkey(void)
 			return;
 		case 'b':
 		case 'v':
-			/* a register filled by the yank search holds suggestions, so
-			   only its first line is pasteable; a register filled by a
-			   selection holds text, so paste every line of it; the test
-			   on *s also covers a register cleared meanwhile */
-			for (s = yank_buf; s && *s && (yank_all || *s != 0x0a); s++)
+			/* paste the first line of the register; the test on
+			   *s also covers an empty register */
+			for (s = yank_buf; s && *s && *s != '\n'; s++)
 				term_send(*s);
 			if (c == 'v')
 				return;
@@ -845,6 +327,7 @@ static void directkey(void)
 			endyank:
 			yank = !yank;
 			input_len = 0;
+			input_sz = 0;
 			term_redraw(1);
 			return;
 		case 'u':
@@ -853,7 +336,7 @@ static void directkey(void)
 				return;
 			input_len = 0;
 			s = yank_buf;
-			while (c == 'n' && s && *s != '\n') {
+			while (c == 'n' && s && *s && *s != '\n') {
 				bufchk()
 				input_buf[input_len++] = *s++;
 			}
@@ -919,8 +402,7 @@ static void directkey(void)
 		yank_update:
 		input_buf[input_len] = '\0';
 		free(yank_buf);
-		yank_buf = NULL;
-		yank_set(term_yank(input_buf), 0);
+		yank_buf = term_yank(input_buf);
 		return;
 	}
 	if (c != -1 && tmain())
@@ -943,7 +425,7 @@ static void peepback(int termid)
 static void sig_work(void);	/* defined below with the signal code */
 static int pollterms(void)
 {
-	struct pollfd ufds[NTERMS + 3];
+	struct pollfd ufds[NTERMS + 2];
 	int term_idx[NTERMS + 1];
 	int i;
 	int n = 1;
@@ -956,17 +438,6 @@ static int pollterms(void)
 			term_idx[n++] = i;
 		}
 	}
-
-	/* retry if the device failed or vanished; poll timeout paces this.
-	   The mouse is let go of while another console is on screen */
-	if (mfd < 0 && !hidden)
-		mouse_open();
-	int mi = -1;
-	if (mfd >= 0) {
-		ufds[n].fd = mfd;
-		ufds[n].events = POLLIN;
-		mi = n++;
-	}
 	/* the signal handler only pokes this pipe, the work is done here */
 	int si = -1;
 	if (sigpipe[0] >= 0) {
@@ -974,13 +445,7 @@ static int pollterms(void)
 		ufds[n].events = POLLIN;
 		si = n++;
 	}
-	int tmo = 1000;
-	if (mpend) {
-		tmo = (int) (mtime + CLICK_REG_MS - mnow());
-		if (tmo < 20)
-			tmo = 20;
-	}
-	if (poll(ufds, n, tmo) < 0)	/* a signal: nothing was reported */
+	if (poll(ufds, n, 1000) < 0)	/* a signal: nothing was reported */
 		for (i = 0; i < n; i++)
 			ufds[i].revents = 0;
 	if (si >= 0 && ufds[si].revents & POLLIN) {
@@ -989,21 +454,12 @@ static int pollterms(void)
 			;
 	}
 	sig_work();		/* goes by the flags, the pipe only wakes poll up */
-	mouse_tick();		/* a busy pty must not starve the marker */
-
 	if (ufds[0].revents & (POLLFLAGS & ~POLLIN))
 		return 1;
 	if (ufds[0].revents & POLLIN)
 		directkey();
-
-	if (mi >= 0 && ufds[mi].revents & (POLLFLAGS & ~POLLIN)) {
-		mouse_close();
-		mi = -1;
-	} else if (mi >= 0 && ufds[mi].revents & POLLIN)
-		mouse_read();
 	for (i = 1; i < n; i++) {
-
-		if (i == mi || i == si)
+		if (i == si)
 			continue;
 		if (ufds[i].revents & (POLLFLAGS & ~POLLIN))
 			continue;
@@ -1034,8 +490,6 @@ static void mainloop(char **args)
 		cmdmode = 1;
 		t_exec(args);
 	}
-
-	mouse_open();
 	while (!exitit)
 		if (pollterms())
 			break;
@@ -1072,10 +526,6 @@ static void vt_release(void)
 {
 	if (hidden)		/* not on screen: nothing to give up */
 		return;
-	/* the pointer and the mouse go with the screen: the other console
-	   gets the device, and no click is taken for a terminal out of sight */
-	mclear();
-	mouse_close();
 	hidden = 1;
 	t_hide(cterm(), 1);
 	console_text();
@@ -1106,10 +556,8 @@ static void sig_work(void)
 		int pid, i;
 		sig_child = 0;
 		while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
-			if (terms[cterm()]->pid == pid) {
-				mclear();	/* what was selected is gone */
+			if (terms[cterm()]->pid == pid)
 				term_end();
-			}
 			for (i = 0; i < NTERMS; i++) {
 				if (terms[i] && terms[i]->pid == pid) {
 					terms[i]->fd = 0;

@@ -50,49 +50,6 @@ static int clrmap(int c)
 
 /* low level drawing and lazy updating */
 
-/* mouse pointer cell and selection, drawn by all rendering paths so
-   partial refreshes never leave trails or corrupt cells; r < 0 hides;
-   the selection inverts cells, the pointer is a bar in the drawn fg
-   color, so it stays visible over the application cursor as well */
-static int mrow = -1, mcol;		/* pointer cell */
-static int msel;			/* selection active */
-static int msr, msc, mer, mec;		/* selection begin/end cells */
-
-static int in_msel(int r, int c)
-{
-	if (!msel || r < msr || r > mer)
-		return 0;
-	if (r == msr && c < msc)
-		return 0;
-	if (r == mer && c > mec)
-		return 0;
-	return 1;
-}
-
-/* the cell must be drawn whole: pointer marker or selection */
-static int mrev(int r, int c)
-{
-	return (r == mrow && c == mcol) || in_msel(r, c);
-}
-
-static void paint_screen(void);	/* history-aware full repaint, below */
-static int candraw(int sr, int er);
-static void _draw_row(int r);
-
-/* repaint one row, or the whole screen when the history is on show */
-static void mrow_view(int r)
-{
-	if (!visible)
-		return;
-	if (term->hpos) {
-		paint_screen();
-		return;
-	}
-	/* the row may come from a selection made before a resize */
-	if (r >= 0 && r < pad_rows() && candraw(r, r + 1))
-		_draw_row(r);
-}
-
 static int fgcolor(void)
 {
 	int c = mode & ATTR_REV ? bg : fg;
@@ -111,15 +68,11 @@ static int bgcolor(void)
 /* assumes visible && !lazy */
 static void _draw_pos(int r, int c, int cursor)
 {
-	int rev = (cursor && mode & MODE_CURSOR) != in_msel(r, c);
+	int rev = cursor && mode & MODE_CURSOR;
 	int i = OFFSET(r, c);
 	int fg = rev ? bgs[i] : fgs[i];
 	int bg = rev ? fgs[i] : bgs[i];
-	/* one fg/bg pair cannot show two blocks: the app cursor XORs the
-	   selection only, the pointer rides on top as a marker bar */
 	pad_put(screen[i], r, c, fg, bg);
-	if (r == mrow && c == mcol)
-		pad_mark(r, c, fg);
 }
 
 /* assumes visible && !lazy */
@@ -130,15 +83,14 @@ static void _draw_row(int r)
 	int i;
 	/* call pad_fill() only once for blank columns with identical backgrounds */
 	for (i = 0; i < pad_cols(); i++) {
-		int mic = mrev(r, i) || r == row;	/* pointer, selection or app cursor: always drawn */
 		cbg = bgs[OFFSET(r, i)];
 		cch = screen[OFFSET(r, i)] ? screen[OFFSET(r, i)] : ' ';
-		if (fsc >= 0 && (cbg != fbg || cch != ' ' || mic)) {
+		if (fsc >= 0 && (cbg != fbg || cch != ' ')) {
 			pad_fill(r, r + 1, fsc, i, fbg & FN_C);
 			fsc = -1;
 		}
-		if (cch != ' ' || mic) {
-			_draw_pos(r, i, r == row && i == col);
+		if (cch != ' ') {
+			_draw_pos(r, i, 0);
 		} else if (fsc < 0) {
 			fsc = i;
 			fbg = cbg;
@@ -150,9 +102,6 @@ static void _draw_row(int r)
 static int candraw(int sr, int er)
 {
 	int i;
-	/* keep the marks inside dirty[] whatever range was handed in */
-	sr = LIMIT(sr, 0, pad_rows());
-	er = LIMIT(er, 0, pad_rows());
 	if (lazy)
 		for (i = sr; i < er; i++)
 			dirty[i] = 1;
@@ -189,41 +138,6 @@ static void draw_cursor(int put)
 {
 	if (candraw(row, row + 1))
 		_draw_pos(row, col, put);
-}
-
-/* position the block cursor (r < 0 hides) and the selection highlight,
-   repainting only the rows whose appearance may have changed */
-static void term_mouse(int r, int c, int sel, int br, int bc, int er, int ec)
-{
-	int or1 = mrow, i;
-	int os1 = msel ? msr : -1, os2 = msel ? mer : -1;
-	int ns1 = -1, ns2 = -1;
-	int same = sel && msel && msr == br && msc == bc && mer == er
-			&& mec == ec;
-
-	mrow = r;
-	mcol = r >= 0 ? LIMIT(c, 0, pad_cols() - 1) : 0;
-	msel = sel; msr = br; msc = bc; mer = er; mec = ec;
-
-	if (!same) {
-		if (sel) { ns1 = br; ns2 = er; }
-		if (ns1 < 0 && os1 >= 0) { ns1 = os1; ns2 = os2; }
-		else if (ns1 >= 0 && os1 >= 0) {
-			ns1 = MIN(ns1, os1); ns2 = MAX(ns2, os2);
-		}
-	}
-	if (!visible)		/* the state is kept, the screen is not ours */
-		return;
-	if (term->hpos) {	/* the history is on show: repaint it all */
-		if (same && r == or1)
-			return;
-		paint_screen();
-		return;
-	}
-	mrow_view(or1);
-	mrow_view(r);
-	for (i = ns1; i >= 0 && i <= ns2; i++)
-		mrow_view(i);
 }
 
 static void lazy_start(void)
@@ -319,10 +233,6 @@ static void term_zero(struct term *term)
 	term->bot = 0;
 	term->rows = 0;
 	term->cols = 0;
-	term->mrow = -1;
-	term->mcol = 0;
-	term->msel = 0;
-	term->msr = term->msc = term->mer = term->mec = 0;
 }
 
 struct term *term_make(void)
@@ -523,11 +433,6 @@ void term_save(struct term *term)
 	term->top = top;
 	term->bot = bot;
 	term->lazy = lazy;
-	/* the pointer and the selection belong to their terminal: another
-	   one drawn meanwhile, the other half of a split, must not show them */
-	term->mrow = mrow; term->mcol = mcol;
-	term->msel = msel;
-	term->msr = msr; term->msc = msc; term->mer = mer; term->mec = mec;
 }
 
 static void resizeupdate(int or, int oc, int nr,  int nc)
@@ -581,15 +486,11 @@ void term_load(struct term *t, int flags)
 	screen = term->screen;
 	fgs = term->fgs;
 	bgs = term->bgs;
-	dirty = term->dirty;
 	visible = flags;
 	top = term->top;
 	bot = term->bot;
 	lazy = term->lazy;
-	mrow = term->mrow; mcol = term->mcol;
-	msel = term->msel;
-	msr = term->msr; msc = term->msc;
-	mer = term->mer; mec = term->mec;
+	dirty = term->dirty;
 }
 
 void term_end(void)
@@ -664,11 +565,15 @@ static void scrl_rows(int nr)
 	}
 }
 
-/* repaint every visible row from screen or history, overlay included */
-static void paint_screen(void)
+void term_scrl(int scrl)
 {
 	int i, j;
-	int hpos = term->hpos;
+	int hpos = LIMIT(term->hpos + scrl, 0, NHIST);
+	term->hpos = hpos;
+	if (!hpos) {
+		lazy_flush();
+		return;
+	}
 	lazy = 1;
 	memset(dirty, 1, pad_rows() * sizeof(*dirty));
 	for (i = 0; i < pad_rows(); i++) {
@@ -676,42 +581,12 @@ static void paint_screen(void)
 		int *_scr = i < hpos ? HISTROW(hpos - i) : term->screen + off;
 		int *_fgs = i < hpos ? NULL : term->fgs + off;
 		int *_bgs = i < hpos ? NULL : term->bgs + off;
-		for (j = 0; j < pad_cols(); j++) {
-			int fg = _fgs ? _fgs[j] : FGCOLOR;
-			int bg = _bgs ? _bgs[j] : BGCOLOR;
-			if (in_msel(i, j)) {
-				int t = fg; fg = bg; bg = t;
-			}
-			pad_put(_scr[j], i, j, fg, bg);
-			if (i == mrow && j == mcol)
-				pad_mark(i, j, fg);
-		}
+		for (j = 0; j < pad_cols(); j++)
+			pad_put(_scr[j], i, j, _fgs ? _fgs[j] : FGCOLOR,
+						_bgs ? _bgs[j] : BGCOLOR);
 	}
 }
 
-void term_scrl(int scrl)
-{
-	int hpos = LIMIT(term->hpos + scrl, 0, NHIST);
-	term->hpos = hpos;
-	if (!hpos) {
-		lazy_flush();
-		return;
-	}
-	paint_screen();
-}
-
-int term_getchar(int r, int c)
-{
-	int hpos, off;
-	int *_scr;
-	if (r < 0 || r >= pad_rows() || c < 0 || c >= pad_cols())
-		return ' ';
-	hpos = term->hpos;
-	off = (r - hpos) * pad_cols();
-	_scr = r < hpos ? HISTROW(hpos - r) : term->screen + off;
-	return _scr[c];
-
-}
 static void scroll_screen(int sr, int nr, int n)
 {
 	draw_cursor(0);
