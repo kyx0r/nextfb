@@ -498,7 +498,9 @@ static int mouse_is(int fd)
 static int mouse_try(char *path)
 {
 	struct input_absinfo ab;
-	int fd = open(path, O_RDONLY | O_NONBLOCK);
+	/* close-on-exec: the grab lives in the open file, and a terminal
+	   program that inherits it keeps the grab after fb has let go */
+	int fd = open(path, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	int i;
 	if (fd < 0)
 		return -1;
@@ -559,6 +561,18 @@ static void mouse_open(void)
 	my = fb_rows() / 2;
 	mrow = mcell_r();
 	mcol = mcell_c();
+}
+
+/* let go of the device; the grab is dropped by name and not left to
+   close(), which only drops it with the last reference to the file */
+static void mouse_close(void)
+{
+	if (mfd < 0)
+		return;
+	ioctl(mfd, EVIOCGRAB, 0);
+	close(mfd);
+	mfd = -1;
+	mbprev = 0;
 }
 
 static void mouse_read(void)
@@ -983,8 +997,7 @@ static int pollterms(void)
 		directkey();
 
 	if (mi >= 0 && ufds[mi].revents & (POLLFLAGS & ~POLLIN)) {
-		close(mfd);
-		mfd = -1;
+		mouse_close();
 		mi = -1;
 	} else if (mi >= 0 && ufds[mi].revents & POLLIN)
 		mouse_read();
@@ -1062,10 +1075,7 @@ static void vt_release(void)
 	/* the pointer and the mouse go with the screen: the other console
 	   gets the device, and no click is taken for a terminal out of sight */
 	mclear();
-	if (mfd >= 0)
-		close(mfd);
-	mfd = -1;
-	mbprev = 0;
+	mouse_close();
 	hidden = 1;
 	t_hide(cterm(), 1);
 	console_text();
