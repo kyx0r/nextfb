@@ -15,7 +15,7 @@ m-e		execute editor program (EDITOR)
 m-x 		switch to tag 'x' (TAGS)
 m-j		switch to current tag's alternative terminal
 m-k		like m-j
-m-p		show tag summary
+m-p		show tag summary and scrollback memory (SB)
 m-o		jump to the previous tag
 m-tab		show the next terminal
 m-s		create a text screenshot (SCRSHOT)
@@ -25,6 +25,7 @@ c-m-o		disable/enable tag switching
 m-q		quit Nextfb
 m-,		scroll up
 m-.		scroll down
+m-h		clear the focused terminal's scrollback
 m-=		split tag horizontally/vertically
 m--		unsplit tag
 ==============	=======================================

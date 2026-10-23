@@ -17,6 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <stdlib.h>
+#include <limits.h>
+#include <stdint.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -182,6 +184,8 @@ static void listtags(void)
 	int c = 0;
 	int r = pad_rows() - 1;
 	int i;
+	char buf[32];
+	size_t sz = term_hsize(terms[cterm()]);
 	pad_put('T', r, c++, fg | FN_B, bg);
 	pad_put('A', r, c++, fg | FN_B, bg);
 	pad_put('G', r, c++, fg | FN_B, bg);
@@ -201,6 +205,16 @@ static void listtags(void)
 			pad_put(tags[i], r, c++, colors[nt], bg);
 		pad_put(i == ctag ? ')' : ' ', r, c++, fg, bg);
 	}
+	/* scrollback memory of the focused terminal */
+	if (sz < 1024 * 1024)
+		snprintf(buf, sizeof(buf), " SB: %luKB",
+			(unsigned long) ((sz + 1023) / 1024));
+	else
+		snprintf(buf, sizeof(buf), " SB: %lu.%luMB",
+			(unsigned long) (sz / (1024 * 1024)),
+			(unsigned long) (sz % (1024 * 1024) * 10 / (1024 * 1024)));
+	for (i = 0; buf[i] && c < pad_cols(); i++)
+		pad_put(buf[i], r, c++, fg, bg);
 	for (; c < pad_cols(); c++)
 		pad_put(' ', r, c, fg, bg);
 	tagslisted = 1;
@@ -349,6 +363,10 @@ static void directkey(void)
 			t_set(tterm(ltag));
 			return;
 		case 'p':
+			listtags();
+			return;
+		case 'h':
+			term_hclear();
 			listtags();
 			return;
 		case '\t':

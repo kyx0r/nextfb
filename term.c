@@ -149,15 +149,14 @@ static void lazy_start(void)
 static void lazy_flush(void)
 {
 	int i;
-	if (!visible || !lazy)
-		return;
+	if (!visible || !lazy || term->hpos)
+		return;	/* keep rows dirty while viewing the scrollback */
 	for (i = 0; i < pad_rows(); i++)
 		if (dirty[i])
 			_draw_row(i);
 	if (dirty[row])
 		_draw_pos(row, col, 1);
 	lazy = 0;
-	term->hpos = 0;
 }
 
 static void screen_reset(int i, int n)
@@ -217,8 +216,15 @@ static int readpty(void)
 
 static void term_zero(struct term *term)
 {
+	free(term->hist);
+	free(term->hfgs);
+	free(term->hbgs);
+	term->hist = NULL;
+	term->hfgs = NULL;
+	term->hbgs = NULL;
+	term->hcap = 0;
+	term->hcols = 0;
 	memset(term->screen, 0, pad_rows() * pad_cols() * sizeof(term->screen[0]));
-	memset(term->hist, 0, NHIST * pad_cols() * sizeof(term->hist[0]));
 	memset(term->fgs, 0, pad_rows() * pad_cols() * sizeof(term->fgs[0]));
 	memset(term->bgs, 0, pad_rows() * pad_cols() * sizeof(term->bgs[0]));
 	memset(term->dirty, 0, pad_rows() * sizeof(term->dirty[0]));
@@ -239,7 +245,9 @@ struct term *term_make(void)
 {
 	struct term *term = malloc(sizeof(*term));
 	term->screen = malloc(pad_rows() * pad_cols() * sizeof(term->screen[0]));
-	term->hist = malloc(NHIST * pad_cols() * sizeof(term->hist[0]));
+	term->hist = NULL;
+	term->hfgs = NULL;
+	term->hbgs = NULL;
 	term->fgs = malloc(pad_rows() * pad_cols() * sizeof(term->fgs[0]));
 	term->bgs = malloc(pad_rows() * pad_cols() * sizeof(term->bgs[0]));
 	term->dirty = malloc(pad_rows() * sizeof(term->dirty[0]));
@@ -254,6 +262,8 @@ void term_free(struct term *term)
 		return;
 	free(term->screen);
 	free(term->hist);
+	free(term->hfgs);
+	free(term->hbgs);
 	free(term->fgs);
 	free(term->bgs);
 	free(term->dirty);
@@ -263,6 +273,8 @@ void term_free(struct term *term)
 void term_send(int c)
 {
 	char b = c;
+	if (term->hpos)	/* typing jumps back to the bottom */
+		term_scrl(-term->hpos);
 	if (term->fd)
 		write(term->fd, &b, 1);
 }
@@ -276,7 +288,7 @@ static void term_sendstr(char *s)
 static void term_blank(void)
 {
 	screen_reset(0, pad_rows() * pad_cols());
-	if (visible)
+	if (visible && !term->hpos)
 		pad_fill(0, -1, 0, -1, bgcolor() & FN_C);
 }
 
@@ -553,22 +565,99 @@ static void blank_rows(int sr, int er)
 	draw_cursor(1);
 }
 
-#define HISTROW(pos)	(term->hist + ((term->hrow + NHIST - (pos)) % NHIST) * pad_cols())
+#define HISTOFF(pos)	((size_t) (term->hrow - (pos)) * term->hcols)
+#define HISTROW(pos)	(term->hist + HISTOFF(pos))
+
+/* grow the history by doubling its capacity; returns nonzero on failure */
+static int hist_grow(void)
+{
+	size_t ncap = term->hcap ? (size_t) term->hcap * 2 : 256;
+	size_t sz;
+	int *p;
+	if (!term->hcols)
+		term->hcols = pad_cols();
+	if (ncap > INT_MAX || ncap > SIZE_MAX / sizeof(int) / term->hcols)
+		return 1;
+	sz = ncap * term->hcols * sizeof(int);
+	if (!(p = realloc(term->hist, sz)))
+		return 1;
+	term->hist = p;
+	if (!(p = realloc(term->hfgs, sz)))
+		return 1;
+	term->hfgs = p;
+	if (!(p = realloc(term->hbgs, sz)))
+		return 1;
+	term->hbgs = p;
+	term->hcap = ncap;
+	return 0;
+}
+
+/* drop the oldest history row to make room when memory runs out */
+static void hist_drop(void)
+{
+	size_t n = (size_t) (term->hrow - 1) * term->hcols;
+	memmove(term->hist, term->hist + term->hcols, n * sizeof(int));
+	memmove(term->hfgs, term->hfgs + term->hcols, n * sizeof(int));
+	memmove(term->hbgs, term->hbgs + term->hcols, n * sizeof(int));
+	term->hrow--;
+}
 
 static void scrl_rows(int nr)
 {
-	int i;
+	int i, j;
 	for (i = 0; i < nr; i++) {
-		memcpy(HISTROW(0), screen + i * pad_cols(),
-				pad_cols() * sizeof(screen[0]));
-		term->hrow = (term->hrow + 1) % NHIST;
+		int ncols;
+		size_t hoff;
+		if (term->hrow >= term->hcap && hist_grow()) {
+			if (!term->hrow)
+				return;
+			hist_drop();
+		}
+		ncols = MIN(term->hcols, pad_cols());
+		hoff = HISTOFF(0);
+		memcpy(term->hist + hoff, screen + i * pad_cols(),
+				ncols * sizeof(screen[0]));
+		memcpy(term->hfgs + hoff, fgs + i * pad_cols(),
+				ncols * sizeof(fgs[0]));
+		memcpy(term->hbgs + hoff, bgs + i * pad_cols(),
+				ncols * sizeof(bgs[0]));
+		for (j = ncols; j < term->hcols; j++) {
+			term->hist[hoff + j] = 0;
+			term->hfgs[hoff + j] = FGCOLOR;
+			term->hbgs[hoff + j] = BGCOLOR;
+		}
+		term->hrow++;
+		if (term->hpos)	/* keep the scrollback view anchored */
+			term->hpos = MIN(term->hpos + 1, term->hrow);
 	}
+}
+
+/* free the scrollback history of the current terminal */
+void term_hclear(void)
+{
+	if (term->hpos)
+		term_scrl(-term->hpos);
+	free(term->hist);
+	free(term->hfgs);
+	free(term->hbgs);
+	term->hist = NULL;
+	term->hfgs = NULL;
+	term->hbgs = NULL;
+	term->hrow = 0;
+	term->hcap = 0;
+	term->hcols = 0;
+}
+
+/* bytes allocated for the scrollback history of a terminal */
+size_t term_hsize(struct term *t)
+{
+	return t ? (size_t) t->hcap * t->hcols * sizeof(int) * 3 : 0;
 }
 
 void term_scrl(int scrl)
 {
 	int i, j;
-	int hpos = LIMIT(term->hpos + scrl, 0, NHIST);
+	int hpos = LIMIT(term->hpos + scrl, 0, term->hrow);
 	term->hpos = hpos;
 	if (!hpos) {
 		lazy_flush();
@@ -577,13 +666,16 @@ void term_scrl(int scrl)
 	lazy = 1;
 	memset(dirty, 1, pad_rows() * sizeof(*dirty));
 	for (i = 0; i < pad_rows(); i++) {
-		int off = (i - hpos) * pad_cols();
-		int *_scr = i < hpos ? HISTROW(hpos - i) : term->screen + off;
-		int *_fgs = i < hpos ? NULL : term->fgs + off;
-		int *_bgs = i < hpos ? NULL : term->bgs + off;
-		for (j = 0; j < pad_cols(); j++)
-			pad_put(_scr[j], i, j, _fgs ? _fgs[j] : FGCOLOR,
-						_bgs ? _bgs[j] : BGCOLOR);
+		int hist = i < hpos;
+		size_t off = hist ? HISTOFF(hpos - i) : (size_t) (i - hpos) * pad_cols();
+		int *_scr = (hist ? term->hist : term->screen) + off;
+		int *_fgs = (hist ? term->hfgs : term->fgs) + off;
+		int *_bgs = (hist ? term->hbgs : term->bgs) + off;
+		int ncols = hist ? MIN(term->hcols, pad_cols()) : pad_cols();
+		for (j = 0; j < ncols; j++)
+			pad_put(_scr[j], i, j, _fgs[j], _bgs[j]);
+		if (ncols < pad_cols())
+			pad_fill(i, i + 1, ncols, -1, BGCOLOR);
 	}
 }
 
@@ -674,7 +766,8 @@ char *term_yank(const char *inbuf)
 	for (i = 0; i < pad_rows(); i++) {
 		int off = (i - hpos) * pad_cols();
 		int *_scr = i < hpos ? HISTROW(hpos - i) : term->screen + off;
-		for (j = 0; j < pad_cols(); j++)
+		int ncols = i < hpos ? MIN(term->hcols, pad_cols()) : pad_cols();
+		for (j = 0; j < ncols; j++)
 			if (~_scr[j] & DWCHAR)
 				s += writeutf8(s, _scr[j]);
 		*s++ = '\n';

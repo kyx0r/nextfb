@@ -9,7 +9,6 @@
 	fclose(f);}\
 
 #define ESC		27		/* escape code */
-#define NHIST		512		/* scrolling history lines */
 
 /* isdw.c */
 #define DWCHAR		0x40000000u	/* 2nd half of a fullwidth char */
@@ -55,13 +54,17 @@ struct term_state {
 struct term {
 	int *screen;			/* screen content */
 	int *hist;			/* scrolling history */
+	int *hfgs;			/* scrolling history foreground */
+	int *hbgs;			/* scrolling history background */
 	int *fgs;			/* foreground color */
 	int *bgs;			/* background color */
 	int *dirty;			/* changed rows in lazy mode */
 	struct pad_state *ps;		/* pad_state for this term */
 	struct term_state cur, sav;	/* terminal saved state */
 	int fd;				/* terminal file descriptor */
-	int hrow;			/* the next history row in hist[] */
+	int hrow;			/* number of rows stored in hist[] */
+	int hcap;			/* allocated rows in hist[] */
+	int hcols;			/* columns of each row in hist[] */
 	int hpos;			/* scrolling history; position */
 	int lazy;			/* lazy mode */
 	int pid;			/* pid of the terminal program */
@@ -80,6 +83,8 @@ void term_end(void);
 void term_screenshot(void);
 char *term_yank(const char *inbuf);
 void term_scrl(int pos);
+void term_hclear(void);
+size_t term_hsize(struct term *t);
 void term_redraw(int all);
 
 /* font.c */
