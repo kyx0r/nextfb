@@ -64,6 +64,7 @@ struct term {
 	int fd;				/* terminal file descriptor */
 	int hrow;			/* number of rows stored in hist[] */
 	int hcap;			/* allocated rows in hist[] */
+	int hhead;			/* ring index of the oldest row in hist[] */
 	int hcols;			/* columns of each row in hist[] */
 	int hpos;			/* scrolling history; position */
 	int lazy;			/* lazy mode */

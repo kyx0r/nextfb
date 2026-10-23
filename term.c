@@ -223,6 +223,7 @@ static void term_zero(struct term *term)
 	term->hfgs = NULL;
 	term->hbgs = NULL;
 	term->hcap = 0;
+	term->hhead = 0;
 	term->hcols = 0;
 	memset(term->screen, 0, pad_rows() * pad_cols() * sizeof(term->screen[0]));
 	memset(term->fgs, 0, pad_rows() * pad_cols() * sizeof(term->fgs[0]));
@@ -565,17 +566,24 @@ static void blank_rows(int sr, int er)
 	draw_cursor(1);
 }
 
-#define HISTOFF(pos)	((size_t) (term->hrow - (pos)) * term->hcols)
+#define HISTOFF(pos)	(((size_t) term->hhead + term->hrow - (pos)) % term->hcap * term->hcols)
 #define HISTROW(pos)	(term->hist + HISTOFF(pos))
 
-/* grow the history by doubling its capacity; returns nonzero on failure */
+/* grow the history by doubling its capacity up to HISTMAX bytes;
+   returns nonzero on failure or when the cap is reached */
 static int hist_grow(void)
 {
 	size_t ncap = term->hcap ? (size_t) term->hcap * 2 : 256;
+	size_t maxcap;
 	size_t sz;
 	int *p;
 	if (!term->hcols)
 		term->hcols = pad_cols();
+	maxcap = (size_t) HISTMAX / (term->hcols * sizeof(int) * 3);
+	if (ncap > maxcap)
+		ncap = maxcap;
+	if (ncap <= (size_t) term->hcap)
+		return 1;
 	if (ncap > INT_MAX || ncap > SIZE_MAX / sizeof(int) / term->hcols)
 		return 1;
 	sz = ncap * term->hcols * sizeof(int);
@@ -592,13 +600,10 @@ static int hist_grow(void)
 	return 0;
 }
 
-/* drop the oldest history row to make room when memory runs out */
+/* drop the oldest history row to make room once the history is full */
 static void hist_drop(void)
 {
-	size_t n = (size_t) (term->hrow - 1) * term->hcols;
-	memmove(term->hist, term->hist + term->hcols, n * sizeof(int));
-	memmove(term->hfgs, term->hfgs + term->hcols, n * sizeof(int));
-	memmove(term->hbgs, term->hbgs + term->hcols, n * sizeof(int));
+	term->hhead = (term->hhead + 1) % term->hcap;
 	term->hrow--;
 }
 
@@ -608,7 +613,7 @@ static void scrl_rows(int nr)
 	for (i = 0; i < nr; i++) {
 		int ncols;
 		size_t hoff;
-		if (term->hrow >= term->hcap && hist_grow()) {
+		if (term->hrow >= term->hcap && (term->hhead || hist_grow())) {
 			if (!term->hrow)
 				return;
 			hist_drop();
@@ -645,6 +650,7 @@ void term_hclear(void)
 	term->hbgs = NULL;
 	term->hrow = 0;
 	term->hcap = 0;
+	term->hhead = 0;
 	term->hcols = 0;
 }
 

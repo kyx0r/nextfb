@@ -31,6 +31,10 @@
 /* where to write the screen shot */
 #define SCRSHOT		"/tmp/scr"
 
+/* maximum scrollback memory per terminal in bytes; the history grows on
+   demand up to this cap, after which the oldest lines are dropped */
+#define HISTMAX		(100 * 1024 * 1024)
+
 /* lock command password; NULL disables locking */
 #define PASS		""
 
