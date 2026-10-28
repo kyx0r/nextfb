@@ -1047,9 +1047,9 @@ static void strseq(void)
 {
 	int c;
 	while ((c = readpty()) >= 0) {
+		/* 8-bit ST (0x9c) is not checked: in UTF-8 it is a
+		 * continuation byte, e.g. in "\x1b]0;✳ title\x07" */
 		if (c == 0x07)			/* BEL */
-			break;
-		if (c == 0x9c)			/* ST (8-bit) */
 			break;
 		if (c == 0x1b) {		/* ESC \ (ST) */
 			c = readpty();
@@ -1296,6 +1296,8 @@ static void csiseq(void)
 		move_cursor(absrow(MAX(1, args[0]) - 1), col);
 		break;
 	case 'm':	/* SGR		set graphic rendition */
+		if (priv)	/* e.g. CSI > 4 ; 1 m (XTMODKEYS), not SGR */
+			break;
 		if (!n)
 			setattr(0);
 		for (i = 0; i < n; i++) {
@@ -1303,7 +1305,7 @@ static void csiseq(void)
 				mode &= ~MODE_CLR8;
 				fg = (args[i + 2] << 16) |
 					(args[i + 3] << 8) | args[i + 4];
-				i += 5;
+				i += 4;
 				continue;
 			}
 			if (args[i] == 38) {
@@ -1315,7 +1317,7 @@ static void csiseq(void)
 			if (args[i] == 48 && args[i + 1] == 2) {
 				bg = (args[i + 2] << 16) |
 					(args[i + 3] << 8) | args[i + 4];
-				i += 5;
+				i += 4;
 				continue;
 			}
 			if (args[i] == 48) {
