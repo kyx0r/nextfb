@@ -62,7 +62,7 @@ corresponding framebuffer region\.
 
 SETTING UP
 ==========2??0?
-2??m 1220reg p OK README:45:a22sc %? %@2152sc!1q0?
+2??m 1220reg p OK README:46:a22sc %? %@2152sc!1q0?
 %f> To execute only a single program in Nextfb, the program and its
 arguments should be passed as command line arguments of Nextfb\. Nextfb
 executes the specified program in a terminal, disables all terminal
@@ -74,52 +74,17 @@ region, like "/dev/fb0:1438x448\+1\+451"\.  Nextfb defines this
 environment variable when executing a program, so that if a tag is
 split, the program running in its terminal is limited to its
 corresponding framebuffer region\.3??0?
-3??m 1220reg p OK README:45:a32sc %? %@2152sc!1q0?
+3??m 1220reg p OK README:46:a32sc %? %@2152sc!1q0?
 %f> m-u		delete all input
 ==============	=======================================
 
 4??0?
-4??+3m 1220reg p OK README:45:a42sc %? %@2152sc!1q0?
+4??+3m 1220reg p OK README:46:a42sc %? %@2152sc!1q0?
 %f> 
 SETTING UP
 ==========5??0?
-5??-11m 1220reg p OK README:45:a52sc %? %@2152sc!1q0?
-%f> .-.	..e.e........np..
-..=.=.=......=...=.=.=...==.=...=.......=.==.....=....
-
-.o.e...u....... ..s....e..r....m..n...xt....... ........a.d i..
-a.....n....h......e............o..a.d .in.........t.......x...\........
-..ec...s..........f....pro..a..i... ....in....d..a.........t..m....
-..i...... ...m...s....d..x...... ........t......g........s....
-
-....ra....ik....pd.................f...a.......BD......i..n....
-...i............c.......... t.e ...me.u...r.....c. .n.........wi..
-r............./...........8...................b...f..e.....s
-......n.......r....e .............g........... s. ............. is
-...i.,.....p.o.ra...........n.........i..........i.....o.i.s
-.or.e...................r.r.....\.
-
-SE........
-......=...6??0?
-6??+3m 1220reg p OK README:45:a62sc %? %@2152sc!1q0?
-grp 1%f> m-u		delete all input.*?
-==============	=======================================.*?
-.*?
-(To execute only a single program in Nextfb, the program and its)7??0?
-grp 07??m 1220reg p OK README:45:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 		exits yank mode
-backspace	delete 1 char from input
-m-n		completes the input till first suggestion.*(To configure Nextfb, you should edit conf\.h\.  To get Nextfb running you)
-need to make sure FR points to a valid Nextfb font \(for testing you can
-try http://litcave\.rudi\.ir/courr\.tf\) and SHELL to the shell you want8??0?
-grp 08??-15m 1220reg p OK README:45:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> any 		start typing strings, autocomplete based on
-		text displayed on the focused terminal
-enter		copies first suggestion to yank buffer and.*(Nextfb fonts can be generated using fbpad_mkfn program)
-\(http://litcave\.rudi\.ir/\)\.  The FR, FI, and FB macros specify the path
-of Nextfb fonts for regular, italic, and bold fonts\.  If FI or FB is9??0?
-grp 09??-21m 1220reg p OK README:45:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg README:452sc %? %@2132sc!0?
+5??-11m 1220reg p OK README:46:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg README:462sc %? %@2132sc!0?
 '\''1,#+10c 
 MOUSE
 =====
@@ -184,7 +149,7 @@ A program given as a Nextfb argument runs alone in a terminal, terminal
 switching is disabled, and Nextfb exits when the program finishes.
 Nextfb also sets FBDEV ("<fb>:<WxH>+<x>+<y>") for the programs it runs, so
 fbpdf, fbvnc, and fbff are limited to their terminal'\''s framebuffer region.
-??!219reg README:45:m12sc %? %@2142sc!b1m!%ya 98?0?
+??!219reg README:46:m12sc %? %@2142sc!b1m!%ya 98?0?
 %f> /\* TERM variable for launched programs \*/
 #define TERM		"linux"
 
@@ -196,20 +161,8 @@ fbpdf, fbvnc, and fbff are limited to their terminal'\''s framebuffer region.
 #define TERM		"linux"
 
 4??0?
-4??+2m 1220reg p OK conf.h:21:a42sc %? %@2152sc!1q0?
-m 01;0grp 1%f> #define SHELL		\{"sh", NULL}
-#define EDITOR		\{"vi", NULL}
-#define MAIL		\{"mailx", "-f", "\+inbox", NULL}.*(/\* foreground and background colors \*/)
-#define FGCOLOR		WHITE15
-#define BGCOLOR		BLACK08??0?
-grp 08??-6m 1220reg p OK conf.h:21:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> #define FR		PWD"/ar\.tf"
-#define FI		PWD"/ai\.tf"
-#define FB		PWD"/ab\.tf".*(#define BLACK0		0x000000)
-#define RED1		0xff0000
-#define GREEN2		0x33ff009??0?
-grp 09??-22m 1220reg p OK conf.h:21:a92sc %? %@2152sc!'\''00?
-1;4;8;9??!219reg conf.h:212sc %? %@2132sc!0?
+4??+2m 1220reg p OK conf.h:21:a42sc %? %@2152sc!0?
+1;4??!219reg conf.h:212sc %? %@2132sc!0?
 '\''1i /* mouse evdev device: a node path like "/dev/input/event24" or a bare
    name taken from /dev/input such as "event24"; empty, the default, runs
    fb without a mouse.  The MOUSE environment variable overrides it */
@@ -226,24 +179,12 @@ fbpdf, fbvnc, and fbff are limited to their terminal'\''s framebuffer region.
 %f> #include <sys/ioctl\.h>
 #include <sys/wait\.h>
 #include <termios\.h>4??0?
-4??+2m 1220reg p OK fb.c:29:a42sc %? %@2152sc!1q0?
+4??+2m 1220reg p OK fb.c:31:a42sc %? %@2152sc!1q0?
 grp 1%f> #include <sys/ioctl\.h>.*?
 #include <sys/wait\.h>.*?
 (#include <termios\.h>)7??0?
-grp 07??m 1220reg p OK fb.c:29:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> #include <stdio\.h>
-#include <signal\.h>
-#include <string\.h>.*(#include <linux/fb\.h>)
-#include <sys/mman\.h>
-#include "fb\.h"8??0?
-grp 08??-4m 1220reg p OK fb.c:29:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> #include <errno\.h>
-#include <fcntl\.h>
-#include <poll\.h>.*(#include "conf\.h")
-#include "font\.c"
-#include "term\.c"9??0?
-grp 09??-7m 1220reg p OK fb.c:29:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg fb.c:292sc %? %@2132sc!0?
+grp 07??m 1220reg p OK fb.c:31:a72sc %? %@2152sc!0?
+1;4;7??!219reg fb.c:312sc %? %@2132sc!0?
 ?0?
 %f+ static int sigpipe\[2] = \{-1, -1};
 static volatile sig_atomic_t sig_rel, sig_acq, sig_child, sig_quit;
@@ -256,20 +197,8 @@ static int readchar\(void\)
 static volatile sig_atomic_t sig_rel, sig_acq, sig_child, sig_quit;
 
 4??0?
-4??+2m 2220reg p OK fb.c:71:a42sc %? %@2152sc!1q0?
-m 01;0grp 1%f> /\* signals only set these flags and poke the pipe, the main loop does the
-   work: hiding and redrawing terminals is not async-signal-safe, and a
-   handler can land in the middle of the very drawing it would redo \*/.*(	if \(read\(0, &b, 1\) > 0\))
-		return \(unsigned char\) b;
-	return -1;8??0?
-grp 08??-4m 2220reg p OK fb.c:71:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> static unsigned int passlen;
-static int cmdmode;			/\* execute a command and exit \*/
-static int tagslisted;.*(/\* the current terminal \*/)
-static int cterm\(void\)
-\{9??0?
-grp 09??-9m 2220reg p OK fb.c:71:a92sc %? %@2152sc!'\''00?
-1;4;8;9??!219reg fb.c:712sc %? %@2132sc!0?
+4??+2m 2220reg p OK fb.c:73:a42sc %? %@2152sc!0?
+1;4??!219reg fb.c:732sc %? %@2132sc!0?
 ?0?
 %f+ \{
 	static int yank;
@@ -283,43 +212,18 @@ static int cterm\(void\)
 	static int input_len;
 	static int input_sz;
 	char \*s;2??0?
-2??m 3220reg p OK fb.c:260:a22sc %? %@2152sc!1q0?
+2??m 3220reg p OK fb.c:274:a22sc %? %@2152sc!1q0?
 ;0fr.,$f+ ^	static char \*yank_buf;$3??0?
-3??m 3220reg p OK fb.c:260:a32sc %? %@2152sc!fr 981qfr 980?
+3??m 3220reg p OK fb.c:274:a32sc %? %@2152sc!fr 981qfr 980?
 %f+ \{
 	static int yank;
 	static char \*input_buf;4??0?
-4??+3m 3220reg p OK fb.c:260:a42sc %? %@2152sc!1q0?
+4??+3m 3220reg p OK fb.c:274:a42sc %? %@2152sc!1q0?
 %f+ 	static int input_len;
 	static int input_sz;
 	char \*s;5??0?
-5??-1m 3220reg p OK fb.c:260:a52sc %? %@2152sc!1q0?
-%f+ \{
-.....i...n. .....
-.s.a......a. ...pu....f.
-.s..................u.;
-.st........ .np.......
-....... ....i...._.z.
-	........6??0?
-6??+3m 3220reg p OK fb.c:260:a62sc %? %@2152sc!1q0?
-grp 1%f+ \{.*?
-	static int yank;.*?
-	static char \*input_buf;.*?
-(	static char \*yank_buf;)7??0?
-grp 07??m 3220reg p OK fb.c:260:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	if \(!tmain\(\)\)
-		term_exec\(args\);
-}.*(	if \(\*PASS && locked\) \{)
-		if \(c == '\''\\r'\''\) \{
-			pass\[passlen] = '\''\\0'\'';8??0?
-grp 08??-9m 3220reg p OK fb.c:260:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	t_hideshow\(cterm\(\), 0, aterm\(cterm\(\)\), 3\);
-	t_hideshow\(aterm\(cterm\(\)\), 1, cterm\(\), 3\);
-}.*(			if \(!strcmp\(PASS, pass\)\))
-				locked = 0;
-			passlen = 0;9??0?
-grp 09??-12m 3220reg p OK fb.c:260:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg fb.c:2602sc %? %@2132sc!0?
+5??-1m 3220reg p OK fb.c:274:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg fb.c:2742sc %? %@2132sc!0?
 ?0?
 %f+ 	static int input_sz;
 	char \*s;
@@ -331,24 +235,8 @@ static int cterm\(void\)
 %f+ 	static int input_sz;
 	char \*s;
 	int c = readchar\(\);4??0?
-4??+2m 4220reg p OK fb.c:264:a42sc %? %@2152sc!1q0?
-grp 1%f+ 	static int input_sz;.*?
-	char \*s;.*?
-(	int c = readchar\(\);)7??0?
-grp 07??m 4220reg p OK fb.c:264:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	if \(!tmain\(\)\)
-		term_exec\(args\);
-}.*(	if \(\*PASS && locked\) \{)
-		if \(c == '\''\\r'\''\) \{
-			pass\[passlen] = '\''\\0'\'';8??0?
-grp 08??-5m 4220reg p OK fb.c:264:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	t_hideshow\(cterm\(\), 0, aterm\(cterm\(\)\), 3\);
-	t_hideshow\(aterm\(cterm\(\)\), 1, cterm\(\), 3\);
-}.*(			if \(!strcmp\(PASS, pass\)\))
-				locked = 0;
-			passlen = 0;9??0?
-grp 09??-8m 4220reg p OK fb.c:264:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg fb.c:2642sc %? %@2132sc!0?
+4??+2m 4220reg p OK fb.c:278:a42sc %? %@2152sc!0?
+1;4??!219reg fb.c:2782sc %? %@2132sc!0?
 ?0?
 %f+ 			return;
 		case '\''b'\'':
@@ -368,49 +256,21 @@ static int cterm\(void\)
 			if \(c == '\''v'\''\)
 				return;
 		case '\''y'\'':2??0?
-2??m 5220reg p OK fb.c:320:a22sc %? %@2152sc!1q0?
+2??m 5220reg p OK fb.c:334:a22sc %? %@2152sc!1q0?
 %f+ 			/\* paste the first line of the register; the test on
 			   \*s also covers an empty register \*/
 			for \(s = yank_buf; s && \*s && \*s != '\''\\n'\''; s\+\+\)
 				term_send\(\*s\);3??0?
-3??m 5220reg p OK fb.c:320:a32sc %? %@2152sc!1q0?
+3??m 5220reg p OK fb.c:334:a32sc %? %@2152sc!1q0?
 %f+ 			return;
 		case '\''b'\'':
 		case '\''v'\'':4??0?
-4??+3m 5220reg p OK fb.c:320:a42sc %? %@2152sc!1q0?
+4??+3m 5220reg p OK fb.c:334:a42sc %? %@2152sc!1q0?
 %f+ 			if \(c == '\''v'\''\)
 				return;
 		case '\''y'\'':5??0?
-5??-4m 5220reg p OK fb.c:320:a52sc %? %@2152sc!1q0?
-%f+ 	....t...;
-.....e ....
-...as..'\''v.:
-.../................t..... .. ... ..g.......t....e.....
-... .... ..s...o...s.an e...y...g........
-	..... ........._.... ......s....\*s....'\''\\n'\''..s\+..
-......r._...d..s\).
-..... ....=.....
-.	.......n.
-........y..6??0?
-6??+3m 5220reg p OK fb.c:320:a62sc %? %@2152sc!1q0?
-grp 1%f+ 			return;.*?
-		case '\''b'\'':.*?
-		case '\''v'\'':.*?
-(			/\* paste the first line of the register; the test on)7??0?
-grp 07??m 5220reg p OK fb.c:320:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 			term_load\(terms\[i], 1\);
-			term_redraw\(1\);
-			term_send\('\'''\''\);.*(		case '\''n'\'':)
-			if \(!yank\)
-				return;8??0?
-grp 08??-14m 5220reg p OK fb.c:320:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 			terms\[i]->pid = pid;
-			terms\[i]->fd = fd;
-			misc_save\(&terms\[i]->cur\);.*(			input_len = 0;)
-			s = yank_buf;
-			while \(c == '\''n'\'' && s && \*s && \*s != '\''\\n'\''\) \{9??0?
-grp 09??-17m 5220reg p OK fb.c:320:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg fb.c:3202sc %? %@2132sc!0?
+5??-4m 5220reg p OK fb.c:334:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg fb.c:3342sc %? %@2132sc!0?
 ?0?
 %f+ 			endyank:
 			yank = !yank;
@@ -424,43 +284,18 @@ static int cterm\(void\)
 			term_redraw\(1\);
 			return;
 		case '\''u'\'':2??0?
-2??m 6220reg p OK fb.c:330:a22sc %? %@2152sc!1q0?
+2??m 6220reg p OK fb.c:344:a22sc %? %@2152sc!1q0?
 ;0fr.,$f+ ^			input_sz = 0;$3??0?
-3??m 6220reg p OK fb.c:330:a32sc %? %@2152sc!fr 981qfr 980?
+3??m 6220reg p OK fb.c:344:a32sc %? %@2152sc!fr 981qfr 980?
 %f+ 			endyank:
 			yank = !yank;
 			input_len = 0;4??0?
-4??+3m 6220reg p OK fb.c:330:a42sc %? %@2152sc!1q0?
+4??+3m 6220reg p OK fb.c:344:a42sc %? %@2152sc!1q0?
 %f+ 			term_redraw\(1\);
 			return;
 		case '\''u'\'':5??0?
-5??-1m 6220reg p OK fb.c:330:a52sc %? %@2152sc!1q0?
-%f+ ..	en....k:
-	...............
-.....p.._........
-.......t_s......
-		..........a...\);
-.........;
-..c..e...'\''.6??0?
-6??+3m 6220reg p OK fb.c:330:a62sc %? %@2152sc!1q0?
-grp 1%f+ 			endyank:.*?
-			yank = !yank;.*?
-			input_len = 0;.*?
-(			input_sz = 0;)7??0?
-grp 07??m 6220reg p OK fb.c:330:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 			term_load\(terms\[i], 1\);
-			term_redraw\(1\);
-			term_send\('\'''\''\);.*(		case '\''n'\'':)
-			if \(!yank\)
-				return;8??0?
-grp 08??-4m 6220reg p OK fb.c:330:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 			terms\[i]->pid = pid;
-			terms\[i]->fd = fd;
-			misc_save\(&terms\[i]->cur\);.*(			input_len = 0;)
-			s = yank_buf;
-			while \(c == '\''n'\'' && s && \*s && \*s != '\''\\n'\''\) \{9??0?
-grp 09??-7m 6220reg p OK fb.c:330:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg fb.c:3302sc %? %@2132sc!0?
+5??-1m 6220reg p OK fb.c:344:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg fb.c:3442sc %? %@2132sc!0?
 ?0?
 %f+ 		yank_update:
 		input_buf\[input_len] = '\''\\0'\'';
@@ -474,43 +309,18 @@ static int cterm\(void\)
 		return;
 	}
 	if \(c != -1 && tmain\(\)\)2??0?
-2??m 7220reg p OK fb.c:405:a22sc %? %@2152sc!1q0?
+2??m 7220reg p OK fb.c:423:a22sc %? %@2152sc!1q0?
 ;0fr.,$f+ ^		yank_buf = term_yank\(input_buf\);$3??0?
-3??m 7220reg p OK fb.c:405:a32sc %? %@2152sc!fr 981qfr 980?
+3??m 7220reg p OK fb.c:423:a32sc %? %@2152sc!fr 981qfr 980?
 %f+ 		yank_update:
 		input_buf\[input_len] = '\''\\0'\'';
 		free\(yank_buf\);4??0?
-4??+3m 7220reg p OK fb.c:405:a42sc %? %@2152sc!1q0?
+4??+3m 7220reg p OK fb.c:423:a42sc %? %@2152sc!1q0?
 %f+ 		return;
 	}
 	if \(c != -1 && tmain\(\)\)5??0?
-5??-1m 7220reg p OK fb.c:405:a52sc %? %@2152sc!1q0?
-%f+ .	...k....a...
-..i...t..u.....u....n..=....'\''.
-	.......a.k_bu..;
-......_.........._y.....n..t.bu..;
-.	....r..
-	.
-.......!. ....&.........6??0?
-6??+3m 7220reg p OK fb.c:405:a62sc %? %@2152sc!1q0?
-grp 1%f+ 		yank_update:.*?
-		input_buf\[input_len] = '\''\\0'\'';.*?
-		free\(yank_buf\);.*?
-(		yank_buf = term_yank\(input_buf\);)7??0?
-grp 07??m 7220reg p OK fb.c:405:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 			input_len = input_len \? input_len - 1 : 0;
-		else
-			input_buf\[input_len\+\+] = c;.*(static void peepterm\(int termid\))
-\{
-	int visible = !hidden && ctag == \(termid % NTAGS\) && split\[ctag];8??0?
-grp 08??-7m 7220reg p OK fb.c:405:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 		if \(c == 13\)
-			goto endyank;
-		else if \(c == 127\).*(static void peepback\(int termid\))
-\{
-	if \(termid != cterm\(\)\)9??0?
-grp 09??-14m 7220reg p OK fb.c:405:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg fb.c:4052sc %? %@2132sc!0?
+5??-1m 7220reg p OK fb.c:423:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg fb.c:4232sc %? %@2132sc!0?
 ?0?
 %f+ static void sig_work\(void\);	/\* defined below with the signal code \*/
 static int pollterms\(void\)
@@ -524,43 +334,18 @@ static int pollterms\(void\)
 	int term_idx\[NTERMS \+ 1];
 	int i;
 	int n = 1;2??0?
-2??m 8220reg p OK fb.c:428:a22sc %? %@2152sc!1q0?
+2??m 8220reg p OK fb.c:446:a22sc %? %@2152sc!1q0?
 ;0fr.,$f+ ^	struct pollfd ufds\[NTERMS \+ 2];$3??0?
-3??m 8220reg p OK fb.c:428:a32sc %? %@2152sc!fr 981qfr 980?
+3??m 8220reg p OK fb.c:446:a32sc %? %@2152sc!fr 981qfr 980?
 %f+ static void sig_work\(void\);	/\* defined below with the signal code \*/
 static int pollterms\(void\)
 \{4??0?
-4??+3m 8220reg p OK fb.c:428:a42sc %? %@2152sc!1q0?
+4??+3m 8220reg p OK fb.c:446:a42sc %? %@2152sc!1q0?
 %f+ 	int term_idx\[NTERMS \+ 1];
 	int i;
 	int n = 1;5??0?
-5??-1m 8220reg p OK fb.c:428:a52sc %? %@2152sc!1q0?
-%f+ ........o.d ..g...rk.......... ........belo....t.......i..a....d. ./
-..a... i.t................
-\{
-.....c.....l......s......S.\+....
-..........i..\[.......\+..];
-.i.t.i.
-	..........6??0?
-6??+3m 8220reg p OK fb.c:428:a62sc %? %@2152sc!1q0?
-grp 1%f+ static void sig_work\(void\);	/\* defined below with the signal code \*/.*?
-static int pollterms\(void\).*?
-\{.*?
-(	struct pollfd ufds\[NTERMS \+ 2];)7??0?
-grp 07??m 8220reg p OK fb.c:428:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	if \(termid != cterm\(\)\)
-		t_hideshow\(termid, 0, cterm\(\), !hidden\);
-}.*(	ufds\[0]\.fd = 0;)
-	ufds\[0]\.events = POLLIN;
-	for \(i = 0; i < NTERMS; i\+\+\) \{8??0?
-grp 08??-4m 8220reg p OK fb.c:428:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	if \(termid != cterm\(\)\)
-		t_hideshow\(cterm\(\), 0, termid, visible\);
-}.*(		if \(terms\[i] && terms\[i]->fd\) \{)
-			ufds\[n]\.fd = terms\[i]->fd;
-			ufds\[n]\.events = POLLIN;9??0?
-grp 09??-7m 8220reg p OK fb.c:428:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg fb.c:4282sc %? %@2132sc!0?
+5??-1m 8220reg p OK fb.c:446:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg fb.c:4462sc %? %@2132sc!0?
 ?0?
 %f+ 			term_idx\[n\+\+] = i;
 		}
@@ -572,24 +357,8 @@ static int pollterms\(void\).*?
 %f+ 			term_idx\[n\+\+] = i;
 		}
 	}4??0?
-4??+2m 9220reg p OK fb.c:440:a42sc %? %@2152sc!1q0?
-grp 1%f+ 			term_idx\[n\+\+] = i;.*?
-		}.*?
-(	})7??0?
-grp 07??m 9220reg p OK fb.c:440:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 		if \(terms\[i] && terms\[i]->fd\) \{
-			ufds\[n]\.fd = terms\[i]->fd;
-			ufds\[n]\.events = POLLIN;.*(		ufds\[n]\.fd = sigpipe\[0];)
-		ufds\[n]\.events = POLLIN;
-		si = n\+\+;8??0?
-grp 08??-4m 9220reg p OK fb.c:440:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	ufds\[0]\.fd = 0;
-	ufds\[0]\.events = POLLIN;
-	for \(i = 0; i < NTERMS; i\+\+\) \{.*(	if \(poll\(ufds, n, 1000\) < 0\)	/\* a signal: nothing was reported \*/)
-		for \(i = 0; i < n; i\+\+\)
-			ufds\[i]\.revents = 0;9??0?
-grp 09??-8m 9220reg p OK fb.c:440:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg fb.c:4402sc %? %@2132sc!0?
+4??+2m 9220reg p OK fb.c:458:a42sc %? %@2152sc!0?
+1;4??!219reg fb.c:4582sc %? %@2132sc!0?
 ?0?
 %f+ 		ufds\[n]\.events = POLLIN;
 		si = n\+\+;
@@ -603,43 +372,18 @@ static int pollterms\(void\).*?
 		for \(i = 0; i < n; i\+\+\)
 			ufds\[i]\.revents = 0;
 	if \(si >= 0 && ufds\[si]\.revents & POLLIN\) \{2??0?
-2??m 10220reg p OK fb.c:448:a22sc %? %@2152sc!1q0?
+2??m 10220reg p OK fb.c:466:a22sc %? %@2152sc!1q0?
 ;0fr.,$f+ ^	if \(poll\(ufds, n, 1000\) < 0\)	/\* a signal: nothing was reported \*/$3??0?
-3??m 10220reg p OK fb.c:448:a32sc %? %@2152sc!fr 981qfr 980?
+3??m 10220reg p OK fb.c:466:a32sc %? %@2152sc!fr 981qfr 980?
 %f+ 		ufds\[n]\.events = POLLIN;
 		si = n\+\+;
 	}4??0?
-4??+3m 10220reg p OK fb.c:448:a42sc %? %@2152sc!1q0?
+4??+3m 10220reg p OK fb.c:466:a42sc %? %@2152sc!1q0?
 %f+ 		for \(i = 0; i < n; i\+\+\)
 			ufds\[i]\.revents = 0;
 	if \(si >= 0 && ufds\[si]\.revents & POLLIN\) \{5??0?
-5??-1m 10220reg p OK fb.c:448:a52sc %? %@2152sc!1q0?
-%f+ 		.f...n]......s ..PO....;
-		.i .....;
-	.
-..f ....l.u..s.......0...<...... a..i..a...n..h....w.. r...rt.d.\*.
-...o.... .... . . .;.i...
-..	.f..\[.......nts . ..
-.if..s..>=....& .f..\[s...r...n.. ...........6??0?
-6??+3m 10220reg p OK fb.c:448:a62sc %? %@2152sc!1q0?
-grp 1%f+ 		ufds\[n]\.events = POLLIN;.*?
-		si = n\+\+;.*?
-	}.*?
-(	if \(poll\(ufds, n, 1000\) < 0\)	/\* a signal: nothing was reported \*/)7??0?
-grp 07??m 10220reg p OK fb.c:448:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	int si = -1;
-	if \(sigpipe\[0] >= 0\) \{
-		ufds\[n]\.fd = sigpipe\[0];.*(		char buf\[64];)
-		while \(read\(sigpipe\[0], buf, sizeof\(buf\)\) > 0\)
-			;8??0?
-grp 08??-4m 10220reg p OK fb.c:448:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 		}
-	}
-	/\* the signal handler only pokes this pipe, the work is done here \*/.*(	sig_work\(\);		/\* goes by the flags, the pipe only wakes poll up \*/)
-	if \(ufds\[0]\.revents & \(POLLFLAGS & ~POLLIN\)\)
-		return 1;9??0?
-grp 09??-8m 10220reg p OK fb.c:448:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg fb.c:4482sc %? %@2132sc!0?
+5??-1m 10220reg p OK fb.c:466:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg fb.c:4662sc %? %@2132sc!0?
 ?0?
 %f+ 			;
 	}
@@ -651,24 +395,8 @@ static int pollterms\(void\).*?
 %f+ 			;
 	}
 	sig_work\(\);		/\* goes by the flags, the pipe only wakes poll up \*/4??0?
-4??+2m 11220reg p OK fb.c:456:a42sc %? %@2152sc!1q0?
-grp 1%f+ 			;.*?
-	}.*?
-(	sig_work\(\);		/\* goes by the flags, the pipe only wakes poll up \*/)7??0?
-grp 07??m 11220reg p OK fb.c:456:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	if \(si >= 0 && ufds\[si]\.revents & POLLIN\) \{
-		char buf\[64];
-		while \(read\(sigpipe\[0], buf, sizeof\(buf\)\) > 0\).*(		if \(ufds\[i]\.revents & POLLIN\) \{)
-			peepterm\(term_idx\[i]\);
-			term_read\(\);8??0?
-grp 08??-10m 11220reg p OK fb.c:456:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	if \(poll\(ufds, n, 1000\) < 0\)	/\* a signal: nothing was reported \*/
-		for \(i = 0; i < n; i\+\+\)
-			ufds\[i]\.revents = 0;.*(			peepback\(term_idx\[i]\);)
-		}
-	}9??0?
-grp 09??-13m 11220reg p OK fb.c:456:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg fb.c:4562sc %? %@2132sc!0?
+4??+2m 11220reg p OK fb.c:474:a42sc %? %@2152sc!0?
+1;4??!219reg fb.c:4742sc %? %@2132sc!0?
 ?0?
 %f+ 		return 1;
 	if \(ufds\[0]\.revents & POLLIN\)
@@ -678,24 +406,8 @@ static int pollterms\(void\).*?
 %f+ 		return 1;
 	if \(ufds\[0]\.revents & POLLIN\)
 		directkey\(\);4??0?
-4??+2m 12220reg p OK fb.c:460:a42sc %? %@2152sc!1q0?
-grp 1%f+ 		return 1;.*?
-	if \(ufds\[0]\.revents & POLLIN\).*?
-(		directkey\(\);)7??0?
-grp 07??m 12220reg p OK fb.c:460:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	if \(si >= 0 && ufds\[si]\.revents & POLLIN\) \{
-		char buf\[64];
-		while \(read\(sigpipe\[0], buf, sizeof\(buf\)\) > 0\).*(		if \(ufds\[i]\.revents & POLLIN\) \{)
-			peepterm\(term_idx\[i]\);
-			term_read\(\);8??0?
-grp 08??-6m 12220reg p OK fb.c:460:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	if \(poll\(ufds, n, 1000\) < 0\)	/\* a signal: nothing was reported \*/
-		for \(i = 0; i < n; i\+\+\)
-			ufds\[i]\.revents = 0;.*(			peepback\(term_idx\[i]\);)
-		}
-	}9??0?
-grp 09??-9m 12220reg p OK fb.c:460:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg fb.c:4602sc %? %@2132sc!0?
+4??+2m 12220reg p OK fb.c:478:a42sc %? %@2152sc!0?
+1;4??!219reg fb.c:4782sc %? %@2132sc!0?
 ?0?
 %f+ 	for \(i = 1; i < n; i\+\+\) \{
 		if \(i == si\)
@@ -707,37 +419,16 @@ static int pollterms\(void\).*?
 			continue;
 		if \(ufds\[i]\.revents & \(POLLFLAGS & ~POLLIN\)\)
 			continue;2??0?
-2??m 13220reg p OK fb.c:462:a22sc %? %@2152sc!1q0?
+2??m 13220reg p OK fb.c:480:a22sc %? %@2152sc!1q0?
 ;0fr.,$f+ ^		if \(i == si\)$3??0?
-3??m 13220reg p OK fb.c:462:a32sc %? %@2152sc!fr 981qfr 980?
+3??m 13220reg p OK fb.c:480:a32sc %? %@2152sc!fr 981qfr 980?
 ;0fr.,$f+ ^	for \(i = 1; i < n; i\+\+\) \{$4??0?
-4??+1m 13220reg p OK fb.c:462:a42sc %? %@2152sc!fr 981qfr 980?
+4??+1m 13220reg p OK fb.c:480:a42sc %? %@2152sc!fr 981qfr 980?
 %f+ 			continue;
 		if \(ufds\[i]\.revents & \(POLLFLAGS & ~POLLIN\)\)
 			continue;5??0?
-5??-1m 13220reg p OK fb.c:462:a52sc %? %@2152sc!1q0?
-%f+ 	..r....=.1..............\{
-.	..... =....\)
-	..........;
-..i......s..........s ..\(.O............O..I...
-		.c...i.u..6??0?
-6??+1m 13220reg p OK fb.c:462:a62sc %? %@2152sc!1q0?
-grp 1%f+ 	for \(i = 1; i < n; i\+\+\) \{.*?
-(		if \(i == si\))7??0?
-grp 07??m 13220reg p OK fb.c:462:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	if \(si >= 0 && ufds\[si]\.revents & POLLIN\) \{
-		char buf\[64];
-		while \(read\(sigpipe\[0], buf, sizeof\(buf\)\) > 0\).*(		if \(ufds\[i]\.revents & POLLIN\) \{)
-			peepterm\(term_idx\[i]\);
-			term_read\(\);8??0?
-grp 08??-4m 13220reg p OK fb.c:462:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	if \(poll\(ufds, n, 1000\) < 0\)	/\* a signal: nothing was reported \*/
-		for \(i = 0; i < n; i\+\+\)
-			ufds\[i]\.revents = 0;.*(			peepback\(term_idx\[i]\);)
-		}
-	}9??0?
-grp 09??-7m 13220reg p OK fb.c:462:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg fb.c:4622sc %? %@2132sc!0?
+5??-1m 13220reg p OK fb.c:480:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg fb.c:4802sc %? %@2132sc!0?
 ?0?
 %f+ 		cmdmode = 1;
 		t_exec\(args\);
@@ -749,24 +440,8 @@ static int pollterms\(void\).*?
 %f+ 		cmdmode = 1;
 		t_exec\(args\);
 	}4??0?
-4??+2m 14220reg p OK fb.c:492:a42sc %? %@2152sc!1q0?
-grp 1%f+ 		cmdmode = 1;.*?
-		t_exec\(args\);.*?
-(	})7??0?
-grp 07??m 14220reg p OK fb.c:492:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	term_load\(terms\[cterm\(\)], 1\);
-	term_redraw\(1\);
-	if \(args\) \{.*(/\* KD_GRAPHICS keeps fbcon from drawing text into the pixels fb paints;)
-   the mode is the console'\''s and outlives the process, so every way out
-   has to put KD_TEXT back \*/8??0?
-grp 08??-7m 14220reg p OK fb.c:492:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	termios\.c_cflag &= ~\(CSIZE \| PARENB\);
-	termios\.c_cflag \|= CS8;
-	tcsetattr\(0, TCSAFLUSH, &termios\);.*(static void console_text\(void\))
-\{
-	if \(GRAPHIC_CONSOLE\)9??0?
-grp 09??-10m 14220reg p OK fb.c:492:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg fb.c:4922sc %? %@2132sc!0?
+4??+2m 14220reg p OK fb.c:510:a42sc %? %@2152sc!0?
+1;4??!219reg fb.c:5102sc %? %@2132sc!0?
 ?0?
 %f+ \{
 	if \(hidden\)		/\* not on screen: nothing to give up \*/
@@ -778,24 +453,8 @@ static int pollterms\(void\).*?
 %f+ \{
 	if \(hidden\)		/\* not on screen: nothing to give up \*/
 		return;4??0?
-4??+2m 15220reg p OK fb.c:528:a42sc %? %@2152sc!1q0?
-grp 1%f+ \{.*?
-	if \(hidden\)		/\* not on screen: nothing to give up \*/.*?
-(		return;)7??0?
-grp 07??m 15220reg p OK fb.c:528:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 		t_hideshow\(aterm\(cterm\(\)\), 0, cterm\(\), 1\);
-	}
-}.*(	/\* refused when no switch is pending, a stray signal: fb is still)
-	   the one on screen, so take it back instead of staying blind \*/
-	if \(ioctl\(0, VT_RELDISP, 1\) < 0\)8??0?
-grp 08??-4m 15220reg p OK fb.c:528:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	fb_cmap\(\);
-	if \(t_show\(cterm\(\), 2\) == 3 && split\[ctag]\) \{
-		t_hideshow\(cterm\(\), 0, aterm\(cterm\(\)\), 3\);.*(static void sig_work\(void\))
-\{
-	if \(sig_quit\)9??0?
-grp 09??-10m 15220reg p OK fb.c:528:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg fb.c:5282sc %? %@2132sc!0?
+4??+2m 15220reg p OK fb.c:546:a42sc %? %@2152sc!0?
+1;4??!219reg fb.c:5462sc %? %@2132sc!0?
 ?0?
 %f+ 		int pid, i;
 		sig_child = 0;
@@ -805,39 +464,16 @@ static int pollterms\(void\).*?
 1??+3m 161q0?
 %f+ 			if \(terms\[cterm\(\)]->pid == pid\)
 				term_end\(\);2??0?
-2??m 16220reg p OK fb.c:559:a22sc %? %@2152sc!1q0?
+2??m 16220reg p OK fb.c:577:a22sc %? %@2152sc!1q0?
 ;0fr.,$f+ ^			if \(terms\[cterm\(\)]->pid == pid\)$3??0?
-3??m 16220reg p OK fb.c:559:a32sc %? %@2152sc!fr 981qfr 980?
+3??m 16220reg p OK fb.c:577:a32sc %? %@2152sc!fr 981qfr 980?
 %f+ 		int pid, i;
 		sig_child = 0;
 		while \(\(pid = waitpid\(-1, NULL, WNOHANG\)\) > 0\) \{4??0?
-4??+3m 16220reg p OK fb.c:559:a42sc %? %@2152sc!1q0?
+4??+3m 16220reg p OK fb.c:577:a42sc %? %@2152sc!1q0?
 ;0fr.,$f+ ^				term_end\(\);$5??0?
-5??-1m 16220reg p OK fb.c:559:a52sc %? %@2152sc!fr 981qfr 980?
-%f+ 	..n. .i., .;
-.......h........
-	..h.....\(........i..........U.L........G.. > .. .
-....f .t....\[..er....-.... .......
-	.	...r._e.d...6??0?
-6??+3m 16220reg p OK fb.c:559:a62sc %? %@2152sc!1q0?
-grp 1%f+ 		int pid, i;.*?
-		sig_child = 0;.*?
-		while \(\(pid = waitpid\(-1, NULL, WNOHANG\)\) > 0\) \{.*?
-(			if \(terms\[cterm\(\)]->pid == pid\))7??0?
-grp 07??m 16220reg p OK fb.c:559:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 		vt_release\(\);
-	}
-	if \(sig_child\) \{.*(					terms\[i]->pid = 0;)
-					scr_free\(i\);
-					break;8??0?
-grp 08??-5m 16220reg p OK fb.c:559:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	}
-	if \(sig_rel\) \{
-		sig_rel = 0;.*(				})
-			}
-		}9??0?
-grp 09??-8m 16220reg p OK fb.c:559:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg fb.c:5592sc %? %@2132sc!0?
+5??-1m 16220reg p OK fb.c:577:a52sc %? %@2152sc!fr 98fr 980?
+1;2;3;4;5??!219reg fb.c:5772sc %? %@2132sc!0?
 ?0?
 %f+ 				term_end\(\);
 			for \(i = 0; i < NTERMS; i\+\+\) \{
@@ -845,23 +481,11 @@ static int pollterms\(void\).*?
 					terms\[i]->fd = 0;1??0?
 1??m 171q0?
 ;0fr.,$f+ ^				term_end\(\);$4??0?
-4??m 17220reg p OK fb.c:560:a42sc %? %@2152sc!fr 981qfr 980?
-m 01;0grp 1%f> 		vt_release\(\);
-	}
-	if \(sig_child\) \{.*(					terms\[i]->pid = 0;)
-					scr_free\(i\);
-					break;8??0?
-grp 08??-4m 17220reg p OK fb.c:560:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	}
-	if \(sig_rel\) \{
-		sig_rel = 0;.*(				})
-			}
-		}9??0?
-grp 09??-7m 17220reg p OK fb.c:560:a92sc %? %@2152sc!'\''00?
-1;4;8;9??!219reg fb.c:5602sc %? %@2132sc!0?
+4??m 17220reg p OK fb.c:578:a42sc %? %@2152sc!fr 98fr 980?
+1;4??!219reg fb.c:5782sc %? %@2132sc!0?
 '\''1i #include <time.h>
 #include <linux/input.h>
-??!219reg fb.c:29:m12sc %? %@2142sc!0?
+??!219reg fb.c:31:m12sc %? %@2142sc!0?
 '\''2i /* ---- mouse support ---- */
 
 #define DOUBLE_MS	400	/* same-cell clicks closer than this merge */
@@ -1389,19 +1013,19 @@ static void mouse_read(void)
 		mouse_event(ev.type, ev.code, ev.value);
 }
 
-??!219reg fb.c:71:m22sc %? %@2142sc!0?
-'\''3d??!219reg fb.c:260:m32sc %? %@2142sc!0?
+??!219reg fb.c:73:m22sc %? %@2142sc!0?
+'\''3d??!219reg fb.c:274:m32sc %? %@2142sc!0?
 '\''4i 	/* any keystroke clears the mouse cursor, marker and selection */
 	if (mrow >= 0 || sel_on || mark_on)
 		mclear();
-??!219reg fb.c:264:m42sc %? %@2142sc!0?
+??!219reg fb.c:278:m42sc %? %@2142sc!0?
 '\''5,#+3c 			mpaste();
-??!219reg fb.c:320:m52sc %? %@2142sc!0?
-'\''6d??!219reg fb.c:330:m62sc %? %@2142sc!0?
+??!219reg fb.c:334:m52sc %? %@2142sc!0?
+'\''6d??!219reg fb.c:344:m62sc %? %@2142sc!0?
 '\''7c 		yank_buf = NULL;
 		yank_set(term_yank(input_buf), 0);
-??!219reg fb.c:405:m72sc %? %@2142sc!0?
-'\''8s/2/3/??!219reg fb.c:428:m82sc %? %@2142sc!0?
+??!219reg fb.c:423:m72sc %? %@2142sc!0?
+'\''8s/2/3/??!219reg fb.c:446:m82sc %? %@2142sc!0?
 '\''9i 
 	/* retry if the device failed or vanished; poll timeout paces this.
 	   The mouse is let go of while another console is on screen */
@@ -1413,7 +1037,7 @@ static void mouse_read(void)
 		ufds[n].events = POLLIN;
 		mi = n++;
 	}
-??!219reg fb.c:440:m92sc %? %@2142sc!0?
+??!219reg fb.c:458:m92sc %? %@2142sc!0?
 '\''10c 	int tmo = 1000;
 	if (mpend) {
 		tmo = (int) (mtime + CLICK_REG_MS - mnow());
@@ -1421,9 +1045,9 @@ static void mouse_read(void)
 			tmo = 20;
 	}
 	if (poll(ufds, n, tmo) < 0)	/* a signal: nothing was reported */
-??!219reg fb.c:448:m102sc %? %@2142sc!0?
+??!219reg fb.c:466:m102sc %? %@2142sc!0?
 '\''11i 	mouse_tick();		/* a busy pty must not starve the marker */
-??!219reg fb.c:456:m112sc %? %@2142sc!0?
+??!219reg fb.c:474:m112sc %? %@2142sc!0?
 '\''12i 	/* sig_work() may have let go of the device since the poll */
 	if (mi >= 0 && mfd >= 0) {
 		if (ufds[mi].revents & (POLLFLAGS & ~POLLIN))
@@ -1431,20 +1055,20 @@ static void mouse_read(void)
 		else if (ufds[mi].revents & POLLIN)
 			mouse_read();
 	}
-??!219reg fb.c:460:m122sc %? %@2142sc!0?
-'\''13s/ s/ mi || i == s/??!219reg fb.c:462:m132sc %? %@2142sc!0?
+??!219reg fb.c:478:m122sc %? %@2142sc!0?
+'\''13s/ s/ mi || i == s/??!219reg fb.c:480:m132sc %? %@2142sc!0?
 '\''14i 	mouse_open();
-??!219reg fb.c:492:m142sc %? %@2142sc!0?
+??!219reg fb.c:510:m142sc %? %@2142sc!0?
 '\''15i 	/* the pointer and the mouse go with the screen: the other console
 	   gets the device, and no click is taken for a terminal out of sight */
 	mclear();
 	mouse_close();
-??!219reg fb.c:528:m152sc %? %@2142sc!0?
+??!219reg fb.c:546:m152sc %? %@2142sc!0?
 '\''16c 			if (terms[cterm()]->pid == pid) {
 				mclear();	/* what was selected is gone */
-??!219reg fb.c:559:m162sc %? %@2142sc!0?
+??!219reg fb.c:577:m162sc %? %@2142sc!0?
 '\''17i 			}
-??!219reg fb.c:560:m172sc %? %@2142sc!b3m!%ya 98?0?
+??!219reg fb.c:578:m172sc %? %@2142sc!b3m!%ya 98?0?
 %f> void pad_conf\(int row, int col, int rows, int cols\);
 void pad_put\(int ch, int r, int c, int fg, int bg\);
 void pad_fill\(int sr, int er, int sc, int ec, int c\);
@@ -1456,24 +1080,12 @@ char \*pad_fbdev\(void\);
 %f> void pad_conf\(int row, int col, int rows, int cols\);
 void pad_put\(int ch, int r, int c, int fg, int bg\);
 void pad_fill\(int sr, int er, int sc, int ec, int c\);4??0?
-4??+2m 1220reg p OK fb.h:44:a42sc %? %@2152sc!1q0?
+4??+2m 1220reg p OK fb.h:43:a42sc %? %@2152sc!1q0?
 grp 1%f> void pad_conf\(int row, int col, int rows, int cols\);.*?
 void pad_put\(int ch, int r, int c, int fg, int bg\);.*?
 (void pad_fill\(int sr, int er, int sc, int ec, int c\);)7??0?
-grp 07??m 1220reg p OK fb.h:44:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> void pad_pset\(struct pad_state \*state\);
-struct pad_state \*pad_init\(void\);
-void pad_free\(struct pad_state \*state\);.*(/\* term\.c \*/)
-struct term_state \{
-	int row, col;8??0?
-grp 08??-4m 1220reg p OK fb.h:44:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> #define pad_cols\(\) pstate->cols
-#define pad_crows\(\) pstate->fnrows
-#define pad_ccols\(\) pstate->fncols.*(	int fg, bg;)
-	int mode;
-};9??0?
-grp 09??-7m 1220reg p OK fb.h:44:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg fb.h:442sc %? %@2132sc!0?
+grp 07??m 1220reg p OK fb.h:43:a72sc %? %@2152sc!0?
+1;4;7??!219reg fb.h:432sc %? %@2132sc!0?
 ?0?
 %f+ 	int pid;			/\* pid of the terminal program \*/
 	int top, bot;			/\* terminal scrolling region \*/
@@ -1485,29 +1097,13 @@ void misc_save\(struct term_state \*state\);1??0?
 %f+ 	int pid;			/\* pid of the terminal program \*/
 	int top, bot;			/\* terminal scrolling region \*/
 	int rows, cols;4??0?
-4??+2m 2220reg p OK fb.h:69:a42sc %? %@2152sc!1q0?
-grp 1%f+ 	int pid;			/\* pid of the terminal program \*/.*?
-	int top, bot;			/\* terminal scrolling region \*/.*?
-(	int rows, cols;)7??0?
-grp 07??m 2220reg p OK fb.h:69:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	int hrow;			/\* the next history row in hist\[] \*/
-	int hpos;			/\* scrolling history; position \*/
-	int lazy;			/\* lazy mode \*/.*(void misc_load\(struct term_state \*state\);)
-void term_load\(struct term \*term, int visible\);
-void term_save\(struct term \*term\);8??0?
-grp 08??-4m 2220reg p OK fb.h:69:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	struct pad_state \*ps;		/\* pad_state for this term \*/
-	struct term_state cur, sav;	/\* terminal saved state \*/
-	int fd;				/\* terminal file descriptor \*/.*(void term_read\(void\);)
-void term_send\(int c\);
-void term_exec\(char \*\*args\);9??0?
-grp 09??-7m 2220reg p OK fb.h:69:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg fb.h:692sc %? %@2132sc!0?
+4??+2m 2220reg p OK fb.h:73:a42sc %? %@2152sc!0?
+1;4??!219reg fb.h:732sc %? %@2132sc!0?
 '\''1i void pad_mark(int r, int c, int color);
-??!219reg fb.h:44:m12sc %? %@2142sc!0?
+??!219reg fb.h:43:m12sc %? %@2142sc!0?
 '\''2i 	int mrow, mcol;			/* the mouse pointer cell of this term */
 	int msel, msr, msc, mer, mec;	/* the mouse selection of this term */
-??!219reg fb.h:69:m22sc %? %@2142sc!b4m!%ya 98?0?
+??!219reg fb.h:73:m22sc %? %@2142sc!b4m!%ya 98?0?
 %f> 	return fbbits;
 }
 
@@ -1518,20 +1114,8 @@ static void fb_set\(int r, int c, void \*mem, int len\)
 }
 
 4??0?
-4??+2m 1220reg p OK pad.c:144:a42sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	fbbits = gc_put\(c, fg, bg\);
-	bmp2fb\(fbbits, gc_bits, fg & FN_C, bg & FN_C,
-		font_rows\(pstate->fonts\[fn]\), font_cols\(pstate->fonts\[fn]\)\);.*(	for \(i = sr; i < er; i\+\+\))
-		fb_set\(i, sc, gc_row, ec - sc\);
-}8??0?
-grp 08??-13m 1220reg p OK pad.c:144:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 		return fbbits;
-	if \(font_bitmap\(pstate->fonts\[fn], gc_bits, c\)\)
-		return NULL;.*(void pad_border\(unsigned c, int wid\))
-\{
-	int v = color2fb\(c & FN_C\);9??0?
-grp 09??-17m 1220reg p OK pad.c:144:a92sc %? %@2152sc!'\''00?
-1;4;8;9??!219reg pad.c:1442sc %? %@2132sc!0?
+4??+2m 1220reg p OK pad.c:144:a42sc %? %@2152sc!0?
+1;4??!219reg pad.c:1442sc %? %@2132sc!0?
 ?0?
 %f+ static void fb_set\(int r, int c, void \*mem, int len\)
 \{
@@ -1553,31 +1137,8 @@ static void fb_box\(int sr, int er, int sc, int ec, unsigned val\)2??0?
 %f+ }
 
 static void fb_box\(int sr, int er, int sc, int ec, unsigned val\)5??0?
-5??-1m 2220reg p OK pad.c:147:a52sc %? %@2152sc!1q0?
-%f+ .t.ti.....d.....et...t .,.....c,..o.d.....,........\)
-\{
-	me.....f...........e.>.broff.\+ .. .........-.fb.....\+..\).......te....p,..... .e. ...s.a.........
-}
-
-........o...fb..........r....t.......t .c. i.. ......s..... ....6??0?
-6??+2m 2220reg p OK pad.c:147:a62sc %? %@2152sc!1q0?
-grp 1%f+ static void fb_set\(int r, int c, void \*mem, int len\).*?
-\{.*?
-(	memcpy\(fb_mem\(pstate->fbroff \+ r\) \+ \(pstate->fbcoff \+ c\) \* pstate->bpp, mem, len \* pstate->bpp\);)7??0?
-grp 07??m 2220reg p OK pad.c:147:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	fbbits = gc_put\(c, fg, bg\);
-	bmp2fb\(fbbits, gc_bits, fg & FN_C, bg & FN_C,
-		font_rows\(pstate->fonts\[fn]\), font_cols\(pstate->fonts\[fn]\)\);.*(	for \(i = sr; i < er; i\+\+\))
-		fb_set\(i, sc, gc_row, ec - sc\);
-}8??0?
-grp 08??-10m 2220reg p OK pad.c:147:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 		return fbbits;
-	if \(font_bitmap\(pstate->fonts\[fn], gc_bits, c\)\)
-		return NULL;.*(void pad_border\(unsigned c, int wid\))
-\{
-	int v = color2fb\(c & FN_C\);9??0?
-grp 09??-14m 2220reg p OK pad.c:147:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg pad.c:1472sc %? %@2132sc!0?
+5??-1m 2220reg p OK pad.c:147:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg pad.c:1472sc %? %@2132sc!0?
 ?0?
 %f+ \{
 	int i, k;
@@ -1589,24 +1150,8 @@ static void fb_box\(int sr, int er, int sc, int ec, unsigned val\)5??0?
 %f+ \{
 	int i, k;
 	char \*p = gc_row;4??0?
-4??+2m 3220reg p OK pad.c:153:a42sc %? %@2152sc!1q0?
-grp 1%f+ \{.*?
-	int i, k;.*?
-(	char \*p = gc_row;)7??0?
-grp 07??m 3220reg p OK pad.c:153:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	fbbits = gc_put\(c, fg, bg\);
-	bmp2fb\(fbbits, gc_bits, fg & FN_C, bg & FN_C,
-		font_rows\(pstate->fonts\[fn]\), font_cols\(pstate->fonts\[fn]\)\);.*(	for \(i = sr; i < er; i\+\+\))
-		fb_set\(i, sc, gc_row, ec - sc\);
-}8??0?
-grp 08??-4m 3220reg p OK pad.c:153:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 		return fbbits;
-	if \(font_bitmap\(pstate->fonts\[fn], gc_bits, c\)\)
-		return NULL;.*(void pad_border\(unsigned c, int wid\))
-\{
-	int v = color2fb\(c & FN_C\);9??0?
-grp 09??-8m 3220reg p OK pad.c:153:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg pad.c:1532sc %? %@2132sc!0?
+4??+2m 3220reg p OK pad.c:153:a42sc %? %@2152sc!0?
+1;4??!219reg pad.c:1532sc %? %@2132sc!0?
 ?0?
 %f+ 	fb_box\(sr \* pstate->fnrows, fber, sc \* pstate->fncols, fbec, color2fb\(c & FN_C\)\);
 }
@@ -1619,14 +1164,8 @@ char \*pad_fbdev\(void\)
 }
 
 4??0?
-4??+2m 4220reg p OK pad.c:203:a42sc %? %@2152sc!1q0?
-m 01;0grp 1%f> \{
-	int fber = er >= 0 \? er \* pstate->fnrows : pstate->fbrows;
-	int fbec = ec >= 0 \? ec \* pstate->fncols : pstate->fbcols;.*(	snprintf\(fbdev, sizeof\(fbdev\), "FBDEV=%s:%dx%d%\+d%\+d",)
-		fb_dev\(\), pstate->fbcols, pstate->fbrows, pstate->fbcoff, pstate->fbroff\);
-	return fbdev;8??0?
-grp 08??-4m 4220reg p OK pad.c:203:a82sc %? %@2152sc!'\''00?
-1;4;8??!219reg pad.c:2032sc %? %@2132sc!0?
+4??+2m 4220reg p OK pad.c:203:a42sc %? %@2152sc!0?
+1;4??!219reg pad.c:2032sc %? %@2132sc!0?
 '\''1i /* r and c are relative to the pad and may lie outside it, pad_border
    draws around it; what must hold is the frame buffer, so clip to that */
 ??!219reg pad.c:144:m12sc %? %@2142sc!0?
@@ -1662,20 +1201,8 @@ static int fgcolor\(void\)
 /\* low level drawing and lazy updating \*/
 
 4??0?
-4??+2m 1220reg p OK term.c:52:a42sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	}
-	return \(g << 16\) \| \(g << 8\) \| g;
-}.*(	if \(mode & ATTR_BOLD\))
-		c \|= FN_B;
-	if \(mode & ATTR_ITALIC\)8??0?
-grp 08??-4m 1220reg p OK term.c:52:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 		int gc = gi \? \(gi \* 40 \+ 55\) : 0;
-		int bc = bi \? \(bi \* 40 \+ 55\) : 0;
-		return \(rc << 16\) \| \(gc << 8\) \| bc;.*(		c \|= FN_I;)
-	return c;
-}9??0?
-grp 09??-7m 1220reg p OK term.c:52:a92sc %? %@2152sc!'\''00?
-1;4;8;9??!219reg term.c:522sc %? %@2132sc!0?
+4??+2m 1220reg p OK term.c:52:a42sc %? %@2152sc!0?
+1;4??!219reg term.c:522sc %? %@2132sc!0?
 ?0?
 %f+ /\* assumes visible && !lazy \*/
 static void _draw_pos\(int r, int c, int cursor\)
@@ -1699,33 +1226,8 @@ static void _draw_pos\(int r, int c, int cursor\)
 %f+ 	int i = OFFSET\(r, c\);
 	int fg = rev \? bgs\[i] : fgs\[i];
 	int bg = rev \? fgs\[i] : bgs\[i];5??0?
-5??-1m 2220reg p OK term.c:71:a52sc %? %@2152sc!1q0?
-%f+ .....s.... v.si..e .& .l......
-..at..........r............, .....,........s..\)
-\{
-.........=.c..... ......... MO..........
-	................,..\);
-.....fg ..... \?.b...i... ..s\[...
-...................... . .......6??0?
-6??+3m 2220reg p OK term.c:71:a62sc %? %@2152sc!1q0?
-grp 1%f+ /\* assumes visible && !lazy \*/.*?
-static void _draw_pos\(int r, int c, int cursor\).*?
-\{.*?
-(	int rev = cursor && mode & MODE_CURSOR;)7??0?
-grp 07??m 2220reg p OK term.c:71:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> \{
-	return mode & ATTR_REV \? fg : bg;
-}.*(static void _draw_row\(int r\))
-\{
-	int cbg = 0, cch;		/\* current background and character \*/8??0?
-grp 08??-8m 2220reg p OK term.c:71:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 		c \|= FN_I;
-	return c;
-}.*(	int fbg, fsc = -1;		/\* filling background and start column \*/)
-	int i;
-	/\* call pad_fill\(\) only once for blank columns with identical backgrounds \*/9??0?
-grp 09??-11m 2220reg p OK term.c:71:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg term.c:712sc %? %@2132sc!0?
+5??-1m 2220reg p OK term.c:71:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg term.c:712sc %? %@2132sc!0?
 ?0?
 %f+ 	int i = OFFSET\(r, c\);
 	int fg = rev \? bgs\[i] : fgs\[i];
@@ -1735,24 +1237,8 @@ static void _draw_pos\(int r, int c, int cursor\).*?
 %f+ 	int i = OFFSET\(r, c\);
 	int fg = rev \? bgs\[i] : fgs\[i];
 	int bg = rev \? fgs\[i] : bgs\[i];4??0?
-4??+2m 3220reg p OK term.c:74:a42sc %? %@2152sc!1q0?
-grp 1%f+ 	int i = OFFSET\(r, c\);.*?
-	int fg = rev \? bgs\[i] : fgs\[i];.*?
-(	int bg = rev \? fgs\[i] : bgs\[i];)7??0?
-grp 07??m 3220reg p OK term.c:74:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> \{
-	return mode & ATTR_REV \? fg : bg;
-}.*(static void _draw_row\(int r\))
-\{
-	int cbg = 0, cch;		/\* current background and character \*/8??0?
-grp 08??-5m 3220reg p OK term.c:74:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 		c \|= FN_I;
-	return c;
-}.*(	int fbg, fsc = -1;		/\* filling background and start column \*/)
-	int i;
-	/\* call pad_fill\(\) only once for blank columns with identical backgrounds \*/9??0?
-grp 09??-8m 3220reg p OK term.c:74:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg term.c:742sc %? %@2132sc!0?
+4??+2m 3220reg p OK term.c:74:a42sc %? %@2152sc!0?
+1;4??!219reg term.c:742sc %? %@2132sc!0?
 ?0?
 %f+ 	pad_put\(screen\[i], r, c, fg, bg\);
 }
@@ -1760,20 +1246,8 @@ static void _draw_pos\(int r, int c, int cursor\).*?
 /\* assumes visible && !lazy \*/1??0?
 1??m 41q0?
 ;0fr.,$f+ ^	pad_put\(screen\[i], r, c, fg, bg\);$4??0?
-4??m 4220reg p OK term.c:75:a42sc %? %@2152sc!fr 981qfr 980?
-m 01;0grp 1%f> \{
-	return mode & ATTR_REV \? fg : bg;
-}.*(static void _draw_row\(int r\))
-\{
-	int cbg = 0, cch;		/\* current background and character \*/8??0?
-grp 08??-4m 4220reg p OK term.c:75:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 		c \|= FN_I;
-	return c;
-}.*(	int fbg, fsc = -1;		/\* filling background and start column \*/)
-	int i;
-	/\* call pad_fill\(\) only once for blank columns with identical backgrounds \*/9??0?
-grp 09??-7m 4220reg p OK term.c:75:a92sc %? %@2152sc!'\''00?
-1;4;8;9??!219reg term.c:752sc %? %@2132sc!0?
+4??m 4220reg p OK term.c:75:a42sc %? %@2152sc!fr 98fr 980?
+1;4??!219reg term.c:752sc %? %@2132sc!0?
 ?0?
 %f+ 	int i;
 	/\* call pad_fill\(\) only once for blank columns with identical backgrounds \*/
@@ -1784,24 +1258,8 @@ static void _draw_pos\(int r, int c, int cursor\).*?
 %f+ 	int i;
 	/\* call pad_fill\(\) only once for blank columns with identical backgrounds \*/
 	for \(i = 0; i < pad_cols\(\); i\+\+\) \{4??0?
-4??+2m 5220reg p OK term.c:85:a42sc %? %@2152sc!1q0?
-grp 1%f+ 	int i;.*?
-	/\* call pad_fill\(\) only once for blank columns with identical backgrounds \*/.*?
-(	for \(i = 0; i < pad_cols\(\); i\+\+\) \{)7??0?
-grp 07??m 5220reg p OK term.c:85:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> \{
-	int cbg = 0, cch;		/\* current background and character \*/
-	int fbg, fsc = -1;		/\* filling background and start column \*/.*(static int candraw\(int sr, int er\))
-\{
-	int i;8??0?
-grp 08??-17m 5220reg p OK term.c:85:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	int bg = rev \? fgs\[i] : bgs\[i];
-	pad_put\(screen\[i], r, c, fg, bg\);
-}.*(	if \(lazy\))
-		for \(i = sr; i < er; i\+\+\)
-			dirty\[i] = 1;9??0?
-grp 09??-20m 5220reg p OK term.c:85:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg term.c:852sc %? %@2132sc!0?
+4??+2m 5220reg p OK term.c:85:a42sc %? %@2152sc!0?
+1;4??!219reg term.c:852sc %? %@2132sc!0?
 ?0?
 %f+ 		cbg = bgs\[OFFSET\(r, i\)];
 		cch = screen\[OFFSET\(r, i\)] \? screen\[OFFSET\(r, i\)] : '\'' '\'';
@@ -1823,31 +1281,8 @@ static void _draw_pos\(int r, int c, int cursor\).*?
 %f+ 			pad_fill\(r, r \+ 1, fsc, i, fbg & FN_C\);
 			fsc = -1;
 		}5??0?
-5??-1m 6220reg p OK term.c:88:a52sc %? %@2152sc!1q0?
-%f+ ...b..........FS.T\(.......
-	..c. ..s...e.....SET....i...\?..c...n....S......i\)..... ..
-......f.c... 0 .&.\(... .. ... ...c.h !.....\)\)..
-.....d..i..\(.. . ...............g....._C..
-...... ...1.
-	..6??0?
-6??+2m 6220reg p OK term.c:88:a62sc %? %@2152sc!1q0?
-grp 1%f+ 		cbg = bgs\[OFFSET\(r, i\)];.*?
-		cch = screen\[OFFSET\(r, i\)] \? screen\[OFFSET\(r, i\)] : '\'' '\'';.*?
-(		if \(fsc >= 0 && \(cbg != fbg \|\| cch != '\'' '\''\)\) \{)7??0?
-grp 07??m 6220reg p OK term.c:88:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> \{
-	int cbg = 0, cch;		/\* current background and character \*/
-	int fbg, fsc = -1;		/\* filling background and start column \*/.*(static int candraw\(int sr, int er\))
-\{
-	int i;8??0?
-grp 08??-14m 6220reg p OK term.c:88:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	int bg = rev \? fgs\[i] : bgs\[i];
-	pad_put\(screen\[i], r, c, fg, bg\);
-}.*(	if \(lazy\))
-		for \(i = sr; i < er; i\+\+\)
-			dirty\[i] = 1;9??0?
-grp 09??-17m 6220reg p OK term.c:88:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg term.c:882sc %? %@2132sc!0?
+5??-1m 6220reg p OK term.c:88:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg term.c:882sc %? %@2132sc!0?
 ?0?
 %f+ 			pad_fill\(r, r \+ 1, fsc, i, fbg & FN_C\);
 			fsc = -1;
@@ -1874,34 +1309,8 @@ static void _draw_pos\(int r, int c, int cursor\).*?
 %f+ 		} else if \(fsc < 0\) \{
 			fsc = i;
 			fbg = cbg;5??0?
-5??-2m 7220reg p OK term.c:92:a52sc %? %@2152sc!1q0?
-%f+ .....d_..l..r... \+......c,....fb.........;
-....s. . ..;
-	..
-.	.f.\(.ch......'\''...
-	...d.aw_.o...,... .\);
-....e..........c.......
-	..........
-		.fbg ......6??0?
-6??+3m 7220reg p OK term.c:92:a62sc %? %@2152sc!1q0?
-grp 1%f+ 			pad_fill\(r, r \+ 1, fsc, i, fbg & FN_C\);.*?
-			fsc = -1;.*?
-		}.*?
-(		if \(cch != '\'' '\''\) \{)7??0?
-grp 07??m 7220reg p OK term.c:92:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> \{
-	int cbg = 0, cch;		/\* current background and character \*/
-	int fbg, fsc = -1;		/\* filling background and start column \*/.*(static int candraw\(int sr, int er\))
-\{
-	int i;8??0?
-grp 08??-10m 7220reg p OK term.c:92:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	int bg = rev \? fgs\[i] : bgs\[i];
-	pad_put\(screen\[i], r, c, fg, bg\);
-}.*(	if \(lazy\))
-		for \(i = sr; i < er; i\+\+\)
-			dirty\[i] = 1;9??0?
-grp 09??-13m 7220reg p OK term.c:92:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg term.c:922sc %? %@2132sc!0?
+5??-2m 7220reg p OK term.c:92:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg term.c:922sc %? %@2132sc!0?
 ?0?
 %f+ static int candraw\(int sr, int er\)
 \{
@@ -1913,24 +1322,8 @@ static void _draw_pos\(int r, int c, int cursor\).*?
 %f+ static int candraw\(int sr, int er\)
 \{
 	int i;4??0?
-4??+2m 8220reg p OK term.c:104:a42sc %? %@2152sc!1q0?
-grp 1%f+ static int candraw\(int sr, int er\).*?
-\{.*?
-(	int i;)7??0?
-grp 07??m 8220reg p OK term.c:104:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	}
-	pad_fill\(r, r \+ 1, fsc >= 0 \? fsc : pad_cols\(\), -1, cbg & FN_C\);
-}.*(static void draw_rows\(int sr, int er\))
-\{
-	int i;8??0?
-grp 08??-7m 8220reg p OK term.c:104:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 			fsc = i;
-			fbg = cbg;
-		}.*(	if \(candraw\(sr, er\)\))
-		for \(i = sr; i < er; i\+\+\)
-			_draw_row\(i\);9??0?
-grp 09??-10m 8220reg p OK term.c:104:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg term.c:1042sc %? %@2132sc!0?
+4??+2m 8220reg p OK term.c:104:a42sc %? %@2152sc!0?
+1;4??!219reg term.c:1042sc %? %@2132sc!0?
 ?0?
 %f+ 		_draw_pos\(row, col, put\);
 }
@@ -1943,20 +1336,8 @@ static void lazy_start\(void\)
 }
 
 4??0?
-4??+2m 9220reg p OK term.c:142:a42sc %? %@2152sc!1q0?
-m 01;0grp 1%f> static void draw_cursor\(int put\)
-\{
-	if \(candraw\(row, row \+ 1\)\).*(static void lazy_flush\(void\))
-\{
-	int i;8??0?
-grp 08??-7m 9220reg p OK term.c:142:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	if \(candraw\(r, r \+ 1\)\)
-		_draw_pos\(r, c, 0\);
-}.*(	if \(!visible \|\| !lazy\))
-		return;
-	for \(i = 0; i < pad_rows\(\); i\+\+\)9??0?
-grp 09??-10m 9220reg p OK term.c:142:a92sc %? %@2152sc!'\''00?
-1;4;8;9??!219reg term.c:1422sc %? %@2132sc!0?
+4??+2m 9220reg p OK term.c:142:a42sc %? %@2152sc!0?
+1;4??!219reg term.c:1422sc %? %@2132sc!0?
 ?0?
 %f+ 	term->bot = 0;
 	term->rows = 0;
@@ -1968,24 +1349,8 @@ struct term \*term_make\(void\)1??0?
 %f+ 	term->bot = 0;
 	term->rows = 0;
 	term->cols = 0;4??0?
-4??+2m 10220reg p OK term.c:235:a42sc %? %@2152sc!1q0?
-grp 1%f+ 	term->bot = 0;.*?
-	term->rows = 0;.*?
-(	term->cols = 0;)7??0?
-grp 07??m 10220reg p OK term.c:235:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	term->lazy = 0;
-	term->pid = 0;
-	term->top = 0;.*(	struct term \*term = malloc\(sizeof\(\*term\)\);)
-	term->screen = malloc\(pad_rows\(\) \* pad_cols\(\) \* sizeof\(term->screen\[0]\)\);
-	term->hist = malloc\(NHIST \* pad_cols\(\) \* sizeof\(term->hist\[0]\)\);8??0?
-grp 08??-5m 10220reg p OK term.c:235:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	term->fd = 0;
-	term->hrow = 0;
-	term->hpos = 0;.*(	term->fgs = malloc\(pad_rows\(\) \* pad_cols\(\) \* sizeof\(term->fgs\[0]\)\);)
-	term->bgs = malloc\(pad_rows\(\) \* pad_cols\(\) \* sizeof\(term->bgs\[0]\)\);
-	term->dirty = malloc\(pad_rows\(\) \* sizeof\(term->dirty\[0]\)\);9??0?
-grp 09??-8m 10220reg p OK term.c:235:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg term.c:2352sc %? %@2132sc!0?
+4??+2m 10220reg p OK term.c:242:a42sc %? %@2152sc!0?
+1;4??!219reg term.c:2422sc %? %@2132sc!0?
 ?0?
 %f+ 	term->top = top;
 	term->bot = bot;
@@ -1997,24 +1362,8 @@ static void resizeupdate\(int or, int oc, int nr,  int nc\)1??0?
 %f+ 	term->top = top;
 	term->bot = bot;
 	term->lazy = lazy;4??0?
-4??+2m 11220reg p OK term.c:435:a42sc %? %@2152sc!1q0?
-grp 1%f+ 	term->top = top;.*?
-	term->bot = bot;.*?
-(	term->lazy = lazy;)7??0?
-grp 07??m 11220reg p OK term.c:435:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	if \(!lazy\)
-		lazy_start\(\);
-	misc_save\(&term->cur\);.*(	int dr = row >= nr \? row - nr \+ 1 : 0;)
-	int dst = nc <= oc \? 0 : nr \* nc - 1;
-	while \(dst >= 0 && dst < nr \* nc\) \{8??0?
-grp 08??-5m 11220reg p OK term.c:435:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> void term_save\(struct term \*term\)
-\{
-	visible = 0;.*(		int r = dst / nc;)
-		int c = dst % nc;
-		int src = dr \+ r < or && c < oc \? \(dr \+ r\) \* oc \+ c : -1;9??0?
-grp 09??-8m 11220reg p OK term.c:435:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg term.c:4352sc %? %@2132sc!0?
+4??+2m 11220reg p OK term.c:448:a42sc %? %@2152sc!0?
+1;4??!219reg term.c:4482sc %? %@2132sc!0?
 ?0?
 %f+ 	bot = term->bot;
 	lazy = term->lazy;
@@ -2026,26 +1375,10 @@ void term_end\(void\)1??0?
 %f+ 	bot = term->bot;
 	lazy = term->lazy;
 	dirty = term->dirty;4??0?
-4??+2m 12220reg p OK term.c:493:a42sc %? %@2152sc!1q0?
-grp 1%f+ 	bot = term->bot;.*?
-	lazy = term->lazy;.*?
-(	dirty = term->dirty;)7??0?
-grp 07??m 12220reg p OK term.c:493:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	bgs = term->bgs;
-	visible = flags;
-	top = term->top;.*(	if \(term->fd\))
-		close\(term->fd\);
-	term_zero\(term\);8??0?
-grp 08??-5m 12220reg p OK term.c:493:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 	misc_load\(&term->cur\);
-	screen = term->screen;
-	fgs = term->fgs;.*(	term_load\(term, visible\);)
-	term_redraw\(1\);
-}9??0?
-grp 09??-8m 12220reg p OK term.c:493:a92sc %? %@2152sc!'\''00?
-1;4;7;8;9??!219reg term.c:4932sc %? %@2132sc!0?
+4??+2m 12220reg p OK term.c:506:a42sc %? %@2152sc!0?
+1;4??!219reg term.c:5062sc %? %@2132sc!0?
 ?0?
-%f+ 	}
+%f+ 	return t \? \(size_t\) t->hcap \* t->hcols \* sizeof\(int\) \* 3 : 0;
 }
 
 void term_scrl\(int scrl\)
@@ -2055,46 +1388,22 @@ void term_scrl\(int scrl\)
 %f+ void term_scrl\(int scrl\)
 \{
 	int i, j;2??0?
-2??m 13220reg p OK term.c:568:a22sc %? %@2152sc!1q0?
+2??m 13220reg p OK term.c:663:a22sc %? %@2152sc!1q0?
 ;0fr.,$f+ ^void term_scrl\(int scrl\)$3??0?
-3??m 13220reg p OK term.c:568:a32sc %? %@2152sc!fr 981qfr 980?
-%f+ 	}
+3??m 13220reg p OK term.c:663:a32sc %? %@2152sc!fr 981qfr 980?
+%f+ 	return t \? \(size_t\) t->hcap \* t->hcols \* sizeof\(int\) \* 3 : 0;
 }
 
 4??0?
-4??+3m 13220reg p OK term.c:568:a42sc %? %@2152sc!1q0?
+4??+3m 13220reg p OK term.c:663:a42sc %? %@2152sc!1q0?
 %f+ \{
 	int i, j;5??0?
-5??-1m 13220reg p OK term.c:568:a52sc %? %@2152sc!1q0?
-%f+ 	.
-}
-
-v.i...er....r.\(... .....
-\{
-......,.j.6??0?
-6??+3m 13220reg p OK term.c:568:a62sc %? %@2152sc!1q0?
-grp 1%f+ 	}.*?
-}.*?
-.*?
-(void term_scrl\(int scrl\))7??0?
-grp 07??m 13220reg p OK term.c:568:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 		memcpy\(HISTROW\(0\), screen \+ i \* pad_cols\(\),
-				pad_cols\(\) \* sizeof\(screen\[0]\)\);
-		term->hrow = \(term->hrow \+ 1\) % NHIST;.*(		int \*_fgs = i < hpos \? NULL : term->fgs \+ off;)
-		int \*_bgs = i < hpos \? NULL : term->bgs \+ off;
-		for \(j = 0; j < pad_cols\(\); j\+\+\)8??0?
-grp 08??-14m 13220reg p OK term.c:568:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> \{
-	int i;
-	for \(i = 0; i < nr; i\+\+\) \{.*(			pad_put\(_scr\[j], i, j, _fgs \? _fgs\[j] : FGCOLOR,)
-						_bgs \? _bgs\[j] : BGCOLOR\);
-	}9??0?
-grp 09??-17m 13220reg p OK term.c:568:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg term.c:5682sc %? %@2132sc!0?
+5??-1m 13220reg p OK term.c:663:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg term.c:6632sc %? %@2132sc!0?
 ?0?
 %f+ \{
 	int i, j;
-	int hpos = LIMIT\(term->hpos \+ scrl, 0, NHIST\);
+	int hpos = LIMIT\(term->hpos \+ scrl, 0, term->hrow\);
 	term->hpos = hpos;
 	if \(!hpos\) \{
 		lazy_flush\(\);
@@ -2104,7 +1413,7 @@ v.i...er....r.\(... .....
 	memset\(dirty, 1, pad_rows\(\) \* sizeof\(\*dirty\)\);
 	for \(i = 0; i < pad_rows\(\); i\+\+\) \{1??0?
 1??+2m 141q0?
-%f+ 	int hpos = LIMIT\(term->hpos \+ scrl, 0, NHIST\);
+%f+ 	int hpos = LIMIT\(term->hpos \+ scrl, 0, term->hrow\);
 	term->hpos = hpos;
 	if \(!hpos\) \{
 		lazy_flush\(\);
@@ -2113,121 +1422,64 @@ v.i...er....r.\(... .....
 	lazy = 1;
 	memset\(dirty, 1, pad_rows\(\) \* sizeof\(\*dirty\)\);
 	for \(i = 0; i < pad_rows\(\); i\+\+\) \{2??0?
-2??m 14220reg p OK term.c:571:a22sc %? %@2152sc!1q0?
-%f+ 	int hpos = LIMIT\(term->hpos \+ scrl, 0, NHIST\);
+2??m 14220reg p OK term.c:666:a22sc %? %@2152sc!1q0?
+%f+ 	int hpos = LIMIT\(term->hpos \+ scrl, 0, term->hrow\);
 	term->hpos = hpos;
 	if \(!hpos\) \{
 		lazy_flush\(\);
 		return;
 	}3??0?
-3??m 14220reg p OK term.c:571:a32sc %? %@2152sc!1q0?
+3??m 14220reg p OK term.c:666:a32sc %? %@2152sc!1q0?
 %f+ \{
 	int i, j;4??0?
-4??+2m 14220reg p OK term.c:571:a42sc %? %@2152sc!1q0?
+4??+2m 14220reg p OK term.c:666:a42sc %? %@2152sc!1q0?
 %f+ 	lazy = 1;
 	memset\(dirty, 1, pad_rows\(\) \* sizeof\(\*dirty\)\);
 	for \(i = 0; i < pad_rows\(\); i\+\+\) \{5??0?
-5??-6m 14220reg p OK term.c:571:a52sc %? %@2152sc!1q0?
-%f+ \{
-	..t......
-......po....L...T\(..r...h.o............ ......;
-.te.m.....s...h.os.
-......hp....\{
-.	..z..........
-..re.....
-	.
-...z......
-	.......di.t.. ....ad..ow... ....z.........y...
-.f....i..............r...... ......6??0?
-6??+2m 14220reg p OK term.c:571:a62sc %? %@2152sc!1q0?
-grp 1%f+ \{.*?
-	int i, j;.*?
-(	int hpos = LIMIT\(term->hpos \+ scrl, 0, NHIST\);)7??0?
-grp 07??m 14220reg p OK term.c:571:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 		memcpy\(HISTROW\(0\), screen \+ i \* pad_cols\(\),
-				pad_cols\(\) \* sizeof\(screen\[0]\)\);
-		term->hrow = \(term->hrow \+ 1\) % NHIST;.*(		int \*_fgs = i < hpos \? NULL : term->fgs \+ off;)
-		int \*_bgs = i < hpos \? NULL : term->bgs \+ off;
-		for \(j = 0; j < pad_cols\(\); j\+\+\)8??0?
-grp 08??-11m 14220reg p OK term.c:571:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> \{
-	int i;
-	for \(i = 0; i < nr; i\+\+\) \{.*(			pad_put\(_scr\[j], i, j, _fgs \? _fgs\[j] : FGCOLOR,)
-						_bgs \? _bgs\[j] : BGCOLOR\);
-	}9??0?
-grp 09??-14m 14220reg p OK term.c:571:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg term.c:5712sc %? %@2132sc!0?
+5??-6m 14220reg p OK term.c:666:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg term.c:6662sc %? %@2132sc!0?
 ?0?
-%f+ 		int \*_scr = i < hpos \? HISTROW\(hpos - i\) : term->screen \+ off;
-		int \*_fgs = i < hpos \? NULL : term->fgs \+ off;
-		int \*_bgs = i < hpos \? NULL : term->bgs \+ off;
-		for \(j = 0; j < pad_cols\(\); j\+\+\)
-			pad_put\(_scr\[j], i, j, _fgs \? _fgs\[j] : FGCOLOR,
-						_bgs \? _bgs\[j] : BGCOLOR\);
+%f+ 		int \*_fgs = \(hist \? term->hfgs : term->fgs\) \+ off;
+		int \*_bgs = \(hist \? term->hbgs : term->bgs\) \+ off;
+		int ncols = hist \? MIN\(term->hcols, pad_cols\(\)\) : pad_cols\(\);
+		for \(j = 0; j < ncols; j\+\+\)
+			pad_put\(_scr\[j], i, j, _fgs\[j], _bgs\[j]\);
+		if \(ncols < pad_cols\(\)\)
+			pad_fill\(i, i \+ 1, ncols, -1, BGCOLOR\);
 	}1??0?
 1??+3m 151q0?
-%f+ 		for \(j = 0; j < pad_cols\(\); j\+\+\)
-			pad_put\(_scr\[j], i, j, _fgs \? _fgs\[j] : FGCOLOR,
-						_bgs \? _bgs\[j] : BGCOLOR\);
+%f+ 		for \(j = 0; j < ncols; j\+\+\)
+			pad_put\(_scr\[j], i, j, _fgs\[j], _bgs\[j]\);
+		if \(ncols < pad_cols\(\)\)
+			pad_fill\(i, i \+ 1, ncols, -1, BGCOLOR\);
 	}2??0?
-2??m 15220reg p OK term.c:584:a22sc %? %@2152sc!1q0?
-%f+ 		for \(j = 0; j < pad_cols\(\); j\+\+\)
-			pad_put\(_scr\[j], i, j, _fgs \? _fgs\[j] : FGCOLOR,
-						_bgs \? _bgs\[j] : BGCOLOR\);3??0?
-3??m 15220reg p OK term.c:584:a32sc %? %@2152sc!1q0?
-%f+ 		int \*_scr = i < hpos \? HISTROW\(hpos - i\) : term->screen \+ off;
-		int \*_fgs = i < hpos \? NULL : term->fgs \+ off;
-		int \*_bgs = i < hpos \? NULL : term->bgs \+ off;4??0?
-4??+3m 15220reg p OK term.c:584:a42sc %? %@2152sc!1q0?
-;0fr.,$f+ ^	}$5??0?
-5??-3m 15220reg p OK term.c:584:a52sc %? %@2152sc!fr 981qfr 980?
-%f+ 	.....\*.sc... i ...p.. \?....TR...hp.. ...\).:...r..>.c.e.... o..;
-	.............i ....o. \?.N... .......>..........
-.	in. ..... ..i ...po........ : t.......s.. o...
-...or.\(j...0... .........s\(....\+.\)
-.......p..._....j...i,.j.._f.... ..g.\[j...........,
-		..	._.g.....b.s............R..
-	.6??0?
-6??+3m 15220reg p OK term.c:584:a62sc %? %@2152sc!1q0?
-grp 1%f+ 		int \*_scr = i < hpos \? HISTROW\(hpos - i\) : term->screen \+ off;.*?
-		int \*_fgs = i < hpos \? NULL : term->fgs \+ off;.*?
-		int \*_bgs = i < hpos \? NULL : term->bgs \+ off;.*?
-(		for \(j = 0; j < pad_cols\(\); j\+\+\))7??0?
-grp 07??m 15220reg p OK term.c:584:a72sc %? %@2152sc!1q0?
-m 01;0grp 1%f> 	memset\(dirty, 1, pad_rows\(\) \* sizeof\(\*dirty\)\);
-	for \(i = 0; i < pad_rows\(\); i\+\+\) \{
-		int off = \(i - hpos\) \* pad_cols\(\);.*(	if \(sr \+ n == 0\))
-		scrl_rows\(sr\);
-	screen_move\(OFFSET\(sr \+ n, 0\), OFFSET\(sr, 0\), nr \* pad_cols\(\)\);8??0?
-grp 08??-9m 15220reg p OK term.c:584:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 		return;
-	}
-	lazy = 1;.*(		empty_rows\(sr, sr \+ n\);)
-	else
-		empty_rows\(sr \+ nr \+ n, sr \+ nr\);9??0?
-grp 09??-13m 15220reg p OK term.c:584:a92sc %? %@2152sc!'\''00?
-1;2;3;4;5;6;7;8;9??!219reg term.c:5842sc %? %@2132sc!0?
+2??m 15220reg p OK term.c:681:a22sc %? %@2152sc!1q0?
+%f+ 		for \(j = 0; j < ncols; j\+\+\)
+			pad_put\(_scr\[j], i, j, _fgs\[j], _bgs\[j]\);3??0?
+3??m 15220reg p OK term.c:681:a32sc %? %@2152sc!1q0?
+%f+ 		int \*_fgs = \(hist \? term->hfgs : term->fgs\) \+ off;
+		int \*_bgs = \(hist \? term->hbgs : term->bgs\) \+ off;
+		int ncols = hist \? MIN\(term->hcols, pad_cols\(\)\) : pad_cols\(\);4??0?
+4??+3m 15220reg p OK term.c:681:a42sc %? %@2152sc!1q0?
+%f+ 		if \(ncols < pad_cols\(\)\)
+			pad_fill\(i, i \+ 1, ncols, -1, BGCOLOR\);
+	}5??0?
+5??-2m 15220reg p OK term.c:681:a52sc %? %@2152sc!0?
+1;2;3;4;5??!219reg term.c:6812sc %? %@2132sc!0?
 ?0?
 %f+ 	}
 }
 
-static void scroll_screen\(int sr, int nr, int n\)1??0?
-1??m 161q0?
-;0fr.,$f+ ^	}$4??0?
-4??m 16220reg p OK term.c:587:a42sc %? %@2152sc!fr 981qfr 980?
-m 01;0grp 1%f> 	memset\(dirty, 1, pad_rows\(\) \* sizeof\(\*dirty\)\);
-	for \(i = 0; i < pad_rows\(\); i\+\+\) \{
-		int off = \(i - hpos\) \* pad_cols\(\);.*(	if \(sr \+ n == 0\))
-		scrl_rows\(sr\);
-	screen_move\(OFFSET\(sr \+ n, 0\), OFFSET\(sr, 0\), nr \* pad_cols\(\)\);8??0?
-grp 08??-6m 16220reg p OK term.c:587:a82sc %? %@2152sc!'\''08??1q0?
-m 01;0grp 1%f> 		return;
-	}
-	lazy = 1;.*(		empty_rows\(sr, sr \+ n\);)
-	else
-		empty_rows\(sr \+ nr \+ n, sr \+ nr\);9??0?
-grp 09??-10m 16220reg p OK term.c:587:a92sc %? %@2152sc!'\''00?
-1;4;8;9??!219reg term.c:5872sc %? %@2132sc!0?
+static void scroll_screen\(int sr, int nr, int n\)
+\{
+	draw_cursor\(0\);1??0?
+1??+2m 161q0?
+%f+ 	}
+}
+
+4??0?
+4??+2m 16220reg p OK term.c:687:a42sc %? %@2152sc!0?
+1;4??!219reg term.c:6872sc %? %@2132sc!0?
 '\''1i /* mouse pointer cell and selection, drawn by all rendering paths so
    partial refreshes never leave trails or corrupt cells; r < 0 hides;
    the selection inverts cells, the pointer is a bar in the drawn fg
@@ -2338,25 +1590,24 @@ static void term_mouse(int r, int c, int sel, int br, int bc, int er, int ec)
 	term->mcol = 0;
 	term->msel = 0;
 	term->msr = term->msc = term->mer = term->mec = 0;
-??!219reg term.c:235:m102sc %? %@2142sc!0?
+??!219reg term.c:242:m102sc %? %@2142sc!0?
 '\''11i 	/* the pointer and the selection belong to their terminal: another
 	   one drawn meanwhile, the other half of a split, must not show them */
 	term->mrow = mrow; term->mcol = mcol;
 	term->msel = msel;
 	term->msr = msr; term->msc = msc; term->mer = mer; term->mec = mec;
-??!219reg term.c:435:m112sc %? %@2142sc!0?
+??!219reg term.c:448:m112sc %? %@2142sc!0?
 '\''12i 	mrow = term->mrow; mcol = term->mcol;
 	msel = term->msel;
 	msr = term->msr; msc = term->msc; mer = term->mer; mec = term->mec;
-??!219reg term.c:493:m122sc %? %@2142sc!0?
+??!219reg term.c:506:m122sc %? %@2142sc!0?
 '\''13c /* repaint every visible row from screen or history, overlay included */
 static void paint_screen(void)
-??!219reg term.c:568:m132sc %? %@2142sc!0?
+??!219reg term.c:663:m132sc %? %@2142sc!0?
 '\''14,#+5c 	int hpos = term->hpos;
-??!219reg term.c:571:m142sc %? %@2142sc!0?
-'\''15,#+2c 		for (j = 0; j < pad_cols(); j++) {
-			int fg = _fgs ? _fgs[j] : FGCOLOR;
-			int bg = _bgs ? _bgs[j] : BGCOLOR;
+??!219reg term.c:666:m142sc %? %@2142sc!0?
+'\''15,#+1c 		for (j = 0; j < ncols; j++) {
+			int fg = _fgs[j], bg = _bgs[j];
 			if (in_msel(i, j)) {
 				int t = fg; fg = bg; bg = t;
 			}
@@ -2364,18 +1615,16 @@ static void paint_screen(void)
 			if (i == mrow && j == mcol)
 				pad_mark(i, j, fg);
 		}
-	}
-}
-
-void term_scrl(int scrl)
+??!219reg term.c:681:m152sc %? %@2142sc!0?
+'\''16i void term_scrl(int scrl)
 {
-	int hpos = LIMIT(term->hpos + scrl, 0, NHIST);
+	int hpos = LIMIT(term->hpos + scrl, 0, term->hrow);
 	term->hpos = hpos;
 	if (!hpos) {
 		lazy_flush();
 		return;
-??!219reg term.c:584:m152sc %? %@2142sc!0?
-'\''16i 	paint_screen();
+	}
+	paint_screen();
 }
 
 /* the character a visible cell shows, history included */
@@ -2387,7 +1636,9 @@ static int term_getchar(int r, int c)
 	if (r < hpos)
 		return HISTROW(hpos - r)[c];
 	return term->screen[(r - hpos) * pad_cols() + c];
-??!219reg term.c:587:m162sc %? %@2142sc!vis 2b0wb1wb2wb3wb4wb5w2q' > "$P2VIF"
+}
+
+??!219reg term.c:687:m162sc %? %@2142sc!vis 2b0wb1wb2wb3wb4wb5w2q' > "$P2VIF"
 EXINIT='%ya 97:? %@97' $VI -e 'README' 'conf.h' 'fb.c' 'fb.h' 'pad.c' 'term.c' "$P2VIF"
 
 if [ $# -gt 0 ]; then
@@ -2400,10 +1651,10 @@ fi
 exit 0
 === PATCH2VI PATCH ===
 diff --git a/README b/README
-index f527699..dc16035 100644
+index 2fc69b0..fe3b8e6 100644
 --- a/README
 +++ b/README
-@@ -42,17 +42,70 @@ m-n		completes the input till first suggestion
+@@ -43,17 +43,70 @@ m-n		completes the input till first suggestion
  m-u		delete all input
  ==============	=======================================
  
@@ -2486,7 +1737,7 @@ index f527699..dc16035 100644
  SETTING UP
  ==========
 diff --git a/conf.h b/conf.h
-index 568cbe2..7431dd3 100644
+index d17b8a7..6c59c13 100644
 --- a/conf.h
 +++ b/conf.h
 @@ -19,6 +19,11 @@
@@ -2502,10 +1753,10 @@ index 568cbe2..7431dd3 100644
     fbcon stops drawing text into the memory fb paints; 0 keeps the old
     text-mode behaviour where fbcon and fb share the same pixels */
 diff --git a/fb.c b/fb.c
-index 9009191..8659bf8 100644
+index e01182d..3283847 100644
 --- a/fb.c
 +++ b/fb.c
-@@ -27,6 +27,8 @@
+@@ -29,6 +29,8 @@
  #include <sys/ioctl.h>
  #include <sys/wait.h>
  #include <termios.h>
@@ -2514,7 +1765,7 @@ index 9009191..8659bf8 100644
  #include <unistd.h>
  #include <linux/vt.h>
  #include <linux/kd.h>
-@@ -69,6 +71,533 @@ static int tagslisted;
+@@ -71,6 +73,533 @@ static int tagslisted;
  static int sigpipe[2] = {-1, -1};
  static volatile sig_atomic_t sig_rel, sig_acq, sig_child, sig_quit;
  
@@ -3048,7 +2299,7 @@ index 9009191..8659bf8 100644
  static int readchar(void)
  {
  	char b;
-@@ -257,11 +786,13 @@ static void directkey(void)
+@@ -271,11 +800,13 @@ static void directkey(void)
  {
  	static int yank;
  	static char *input_buf;
@@ -3063,7 +2314,7 @@ index 9009191..8659bf8 100644
  	if (tagslisted) {
  		term_redraw(1);
  		tagslisted = 0;
-@@ -317,17 +848,13 @@ static void directkey(void)
+@@ -331,17 +862,13 @@ static void directkey(void)
  			return;
  		case 'b':
  		case 'v':
@@ -3082,7 +2333,7 @@ index 9009191..8659bf8 100644
  			term_redraw(1);
  			return;
  		case 'u':
-@@ -402,7 +929,8 @@ static void directkey(void)
+@@ -420,7 +947,8 @@ static void directkey(void)
  		yank_update:
  		input_buf[input_len] = '\0';
  		free(yank_buf);
@@ -3092,7 +2343,7 @@ index 9009191..8659bf8 100644
  		return;
  	}
  	if (c != -1 && tmain())
-@@ -425,7 +953,7 @@ static void peepback(int termid)
+@@ -443,7 +971,7 @@ static void peepback(int termid)
  static void sig_work(void);	/* defined below with the signal code */
  static int pollterms(void)
  {
@@ -3101,7 +2352,7 @@ index 9009191..8659bf8 100644
  	int term_idx[NTERMS + 1];
  	int i;
  	int n = 1;
-@@ -438,6 +966,17 @@ static int pollterms(void)
+@@ -456,6 +984,17 @@ static int pollterms(void)
  			term_idx[n++] = i;
  		}
  	}
@@ -3119,7 +2370,7 @@ index 9009191..8659bf8 100644
  	/* the signal handler only pokes this pipe, the work is done here */
  	int si = -1;
  	if (sigpipe[0] >= 0) {
-@@ -445,7 +984,13 @@ static int pollterms(void)
+@@ -463,7 +1002,13 @@ static int pollterms(void)
  		ufds[n].events = POLLIN;
  		si = n++;
  	}
@@ -3134,7 +2385,7 @@ index 9009191..8659bf8 100644
  		for (i = 0; i < n; i++)
  			ufds[i].revents = 0;
  	if (si >= 0 && ufds[si].revents & POLLIN) {
-@@ -454,12 +999,20 @@ static int pollterms(void)
+@@ -472,12 +1017,20 @@ static int pollterms(void)
  			;
  	}
  	sig_work();		/* goes by the flags, the pipe only wakes poll up */
@@ -3156,7 +2407,7 @@ index 9009191..8659bf8 100644
  			continue;
  		if (ufds[i].revents & (POLLFLAGS & ~POLLIN))
  			continue;
-@@ -490,6 +1043,7 @@ static void mainloop(char **args)
+@@ -508,6 +1061,7 @@ static void mainloop(char **args)
  		cmdmode = 1;
  		t_exec(args);
  	}
@@ -3164,7 +2415,7 @@ index 9009191..8659bf8 100644
  	while (!exitit)
  		if (pollterms())
  			break;
-@@ -526,6 +1080,10 @@ static void vt_release(void)
+@@ -544,6 +1098,10 @@ static void vt_release(void)
  {
  	if (hidden)		/* not on screen: nothing to give up */
  		return;
@@ -3175,7 +2426,7 @@ index 9009191..8659bf8 100644
  	hidden = 1;
  	t_hide(cterm(), 1);
  	console_text();
-@@ -556,8 +1114,10 @@ static void sig_work(void)
+@@ -574,8 +1132,10 @@ static void sig_work(void)
  		int pid, i;
  		sig_child = 0;
  		while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
@@ -3188,10 +2439,10 @@ index 9009191..8659bf8 100644
  				if (terms[i] && terms[i]->pid == pid) {
  					terms[i]->fd = 0;
 diff --git a/fb.h b/fb.h
-index 49e83b9..78fed3f 100644
+index 2cb13b8..4c7ba7c 100644
 --- a/fb.h
 +++ b/fb.h
-@@ -42,6 +42,7 @@ void pad_free(struct pad_state *state);
+@@ -41,6 +41,7 @@ void pad_free(struct pad_state *state);
  void pad_conf(int row, int col, int rows, int cols);
  void pad_put(int ch, int r, int c, int fg, int bg);
  void pad_fill(int sr, int er, int sc, int ec, int c);
@@ -3199,7 +2450,7 @@ index 49e83b9..78fed3f 100644
  void pad_border(unsigned c, int wid);
  char *pad_fbdev(void);
  
-@@ -67,6 +68,8 @@ struct term {
+@@ -71,6 +72,8 @@ struct term {
  	int pid;			/* pid of the terminal program */
  	int top, bot;			/* terminal scrolling region */
  	int rows, cols;
@@ -3256,7 +2507,7 @@ index 8208eb4..14cce61 100644
  {
  	static char fbdev[2048];
 diff --git a/term.c b/term.c
-index 2f78578..59cc8ec 100644
+index 0fe380b..13069c6 100644
 --- a/term.c
 +++ b/term.c
 @@ -50,6 +50,49 @@ static int clrmap(int c)
@@ -3405,7 +2656,7 @@ index 2f78578..59cc8ec 100644
  static void lazy_start(void)
  {
  	memset(dirty, 0, pad_rows() * sizeof(*dirty));
-@@ -233,6 +327,10 @@ static void term_zero(struct term *term)
+@@ -240,6 +334,10 @@ static void term_zero(struct term *term)
  	term->bot = 0;
  	term->rows = 0;
  	term->cols = 0;
@@ -3416,7 +2667,7 @@ index 2f78578..59cc8ec 100644
  }
  
  struct term *term_make(void)
-@@ -433,6 +531,11 @@ void term_save(struct term *term)
+@@ -446,6 +544,11 @@ void term_save(struct term *term)
  	term->top = top;
  	term->bot = bot;
  	term->lazy = lazy;
@@ -3428,7 +2679,7 @@ index 2f78578..59cc8ec 100644
  }
  
  static void resizeupdate(int or, int oc, int nr,  int nc)
-@@ -491,6 +594,9 @@ void term_load(struct term *t, int flags)
+@@ -504,6 +607,9 @@ void term_load(struct term *t, int flags)
  	bot = term->bot;
  	lazy = term->lazy;
  	dirty = term->dirty;
@@ -3438,8 +2689,8 @@ index 2f78578..59cc8ec 100644
  }
  
  void term_end(void)
-@@ -565,15 +671,11 @@ static void scrl_rows(int nr)
- 	}
+@@ -660,15 +766,11 @@ size_t term_hsize(struct term *t)
+ 	return t ? (size_t) t->hcap * t->hcols * sizeof(int) * 3 : 0;
  }
  
 -void term_scrl(int scrl)
@@ -3447,7 +2698,7 @@ index 2f78578..59cc8ec 100644
 +static void paint_screen(void)
  {
  	int i, j;
--	int hpos = LIMIT(term->hpos + scrl, 0, NHIST);
+-	int hpos = LIMIT(term->hpos + scrl, 0, term->hrow);
 -	term->hpos = hpos;
 -	if (!hpos) {
 -		lazy_flush();
@@ -3457,16 +2708,14 @@ index 2f78578..59cc8ec 100644
  	lazy = 1;
  	memset(dirty, 1, pad_rows() * sizeof(*dirty));
  	for (i = 0; i < pad_rows(); i++) {
-@@ -581,10 +683,39 @@ void term_scrl(int scrl)
- 		int *_scr = i < hpos ? HISTROW(hpos - i) : term->screen + off;
- 		int *_fgs = i < hpos ? NULL : term->fgs + off;
- 		int *_bgs = i < hpos ? NULL : term->bgs + off;
--		for (j = 0; j < pad_cols(); j++)
--			pad_put(_scr[j], i, j, _fgs ? _fgs[j] : FGCOLOR,
--						_bgs ? _bgs[j] : BGCOLOR);
-+		for (j = 0; j < pad_cols(); j++) {
-+			int fg = _fgs ? _fgs[j] : FGCOLOR;
-+			int bg = _bgs ? _bgs[j] : BGCOLOR;
+@@ -678,13 +780,42 @@ void term_scrl(int scrl)
+ 		int *_fgs = (hist ? term->hfgs : term->fgs) + off;
+ 		int *_bgs = (hist ? term->hbgs : term->bgs) + off;
+ 		int ncols = hist ? MIN(term->hcols, pad_cols()) : pad_cols();
+-		for (j = 0; j < ncols; j++)
+-			pad_put(_scr[j], i, j, _fgs[j], _bgs[j]);
++		for (j = 0; j < ncols; j++) {
++			int fg = _fgs[j], bg = _bgs[j];
 +			if (in_msel(i, j)) {
 +				int t = fg; fg = bg; bg = t;
 +			}
@@ -3474,17 +2723,19 @@ index 2f78578..59cc8ec 100644
 +			if (i == mrow && j == mcol)
 +				pad_mark(i, j, fg);
 +		}
-+	}
-+}
-+
+ 		if (ncols < pad_cols())
+ 			pad_fill(i, i + 1, ncols, -1, BGCOLOR);
+ 	}
+ }
+ 
 +void term_scrl(int scrl)
 +{
-+	int hpos = LIMIT(term->hpos + scrl, 0, NHIST);
++	int hpos = LIMIT(term->hpos + scrl, 0, term->hrow);
 +	term->hpos = hpos;
 +	if (!hpos) {
 +		lazy_flush();
 +		return;
- 	}
++	}
 +	paint_screen();
 +}
 +
@@ -3497,6 +2748,8 @@ index 2f78578..59cc8ec 100644
 +	if (r < hpos)
 +		return HISTROW(hpos - r)[c];
 +	return term->screen[(r - hpos) * pad_cols() + c];
- }
- 
++}
++
  static void scroll_screen(int sr, int nr, int n)
+ {
+ 	draw_cursor(0);
